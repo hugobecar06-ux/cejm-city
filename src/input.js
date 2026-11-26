@@ -1,7 +1,7 @@
 // Clavier (event.code => AZERTY et QWERTY), souris/tactile pour la caméra, actions virtuelles (mobile)
 const ACTIONS = {
   interact: ['KeyE'], notebook: ['KeyJ'], advance: ['Enter', 'NumpadEnter', 'Space'],
-  horn: ['KeyH'], debug: ['KeyP'], mute: ['KeyM'], handbrake: ['Space'], jump: ['Space'],
+  horn: ['KeyH'], debug: ['KeyP'], mute: ['KeyM'], handbrake: ['Space'], jump: ['Space'], map: ['KeyC'],
 };
 const BLOCK = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 

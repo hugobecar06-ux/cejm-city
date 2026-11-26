@@ -258,3 +258,17 @@ body.talking #dialog { bottom: calc(9vh + 8px); }
 @media (max-height: 500px) {
   body.touch #speedo { left: 20px; right: auto; transform: none; bottom: 104px; }
 }
+
+/* ---------- Grande carte ---------- */
+.map-card { width: min(1000px, 100%); height: min(92vh, 900px); display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.map-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 700; font-size: 14px; }
+.map-wrap { flex: 1; min-height: 0; display: grid; place-items: center; }
+#bigmap-canvas { border-radius: 12px; cursor: crosshair; touch-action: none; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+#minimap { cursor: pointer; }
+@media (max-height: 500px) { .map-card { height: calc(100vh - 16px); padding: 10px 14px; gap: 6px; } .map-head { font-size: 12px; } .map-card .btn { min-height: 40px; padding: 8px 16px; font-size: 13px; } }
+body.to-waypoint #arrow path { fill: #ff3d8b; }
+@media (max-height: 500px) {
+  .map-card { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; }
+  .map-head { grid-column: 1 / 3; }
+  .map-card .row { flex-direction: column; justify-content: center; }
+}

@@ -64,4 +64,4 @@ Vite + Three.js, aucun backend, aucun fichier 3D externe (modèles low-poly gén
 
 ## Sons
 
-Le bruit de moteur de la voiture utilise `public/sounds/f1.mp3` (fichier fourni par l'auteur du jeu : « F1 racing car sound »). Les autres sons sont générés en WebAudio.
+Tous les sons sont générés en WebAudio, sans fichier : le moteur est un V8 synthétisé (allumage irrégulier « cross-plane », boîte 5 vitesses, pétarades au lever de pied).

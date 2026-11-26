@@ -1,7 +1,7 @@
 import { HALF, SPACING, blockCenter, N_BLOCKS, SEA_X } from '../world/constants.js';
 
 const MINX = -260, MAXX = 320, MINZ = -260, MAXZ = 260, PPM = 2; // pixels par mètre (carte de base)
-const COL = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff' };
+const COL = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff', waypoint: '#ff3d8b' };
 
 // Mini-carte ronde qui tourne avec la caméra
 export class Minimap {
@@ -73,5 +73,58 @@ export class Minimap {
     g.fillStyle = '#ffffff'; g.fill(); g.strokeStyle = '#ff3d8b'; g.lineWidth = 2; g.stroke();
     g.restore();
     g.beginPath(); g.arc(R, R, R - 2, 0, Math.PI * 2); g.lineWidth = 4; g.strokeStyle = 'rgba(255,61,139,0.9)'; g.stroke();
+  }
+}
+
+// Grande carte : on clique / tape pour poser un repère (point de passage)
+export class BigMap {
+  constructor(game, minimap) {
+    this.game = game;
+    this.mini = minimap;
+    this.el = document.getElementById('bigmap');
+    this.c = document.getElementById('bigmap-canvas');
+    this.isOpen = false;
+    document.getElementById('bigmap-close').addEventListener('click', () => this.close());
+    document.getElementById('bigmap-clear').addEventListener('click', () => { game.setWaypoint(null); this.draw(); });
+    this.c.addEventListener('pointerdown', (e) => {
+      const r = this.c.getBoundingClientRect();
+      const x = MINX + ((e.clientX - r.left) / r.width) * (MAXX - MINX);
+      const z = MINZ + ((e.clientY - r.top) / r.height) * (MAXZ - MINZ);
+      const w = game.waypoint;
+      // toucher le repère existant le retire
+      if (w && Math.hypot(w.x - x, w.z - z) < 12) game.setWaypoint(null);
+      else game.setWaypoint({ x: Math.max(-210, Math.min(234, x)), z: Math.max(-210, Math.min(210, z)) });
+      this.draw();
+    });
+    window.addEventListener('resize', () => this.isOpen && this.draw());
+  }
+  toggle() { this.isOpen ? this.close() : this.open(); }
+  open() { this.el.classList.remove('hidden'); this.isOpen = true; this.draw(); }
+  close() { this.el.classList.add('hidden'); this.isOpen = false; }
+  draw() {
+    const box = this.el.querySelector('.map-wrap').getBoundingClientRect();
+    const ratio = (MAXX - MINX) / (MAXZ - MINZ);
+    let w = box.width, h = w / ratio;
+    if (h > box.height) { h = box.height; w = h * ratio; }
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.c.style.width = `${w}px`; this.c.style.height = `${h}px`;
+    this.c.width = w * dpr; this.c.height = h * dpr;
+    const g = this.c.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.drawImage(this.mini.base, 0, 0, w, h);
+    const X = (x) => ((x - MINX) / (MAXX - MINX)) * w, Z = (z) => ((z - MINZ) / (MAXZ - MINZ)) * h;
+    for (const p of this.game.missions.allPoints()) {
+      g.beginPath(); g.arc(X(p.x), Z(p.z), 7, 0, Math.PI * 2);
+      g.fillStyle = COL[p.kind]; g.fill(); g.lineWidth = 2; g.strokeStyle = '#111'; g.stroke();
+    }
+    const wp = this.game.waypoint;
+    if (wp) {
+      const x = X(wp.x), y = Z(wp.z);
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x - 9, y - 18); g.arc(x, y - 20, 9, Math.PI, 0); g.lineTo(x, y); g.closePath();
+      g.fillStyle = '#ff3d8b'; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+    }
+    const p = this.game.player;
+    g.beginPath(); g.arc(X(p.x), Z(p.z), 8, 0, Math.PI * 2); g.fillStyle = '#ffffff'; g.fill();
+    g.lineWidth = 3; g.strokeStyle = '#ff3d8b'; g.stroke();
   }
 }

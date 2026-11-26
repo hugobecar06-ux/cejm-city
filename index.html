@@ -34,7 +34,7 @@
       <div class="controls">
         <div class="ctl-desktop">
           <b>Z/Q/S/D</b> ou <b>flèches</b> : se déplacer / conduire · <b>Shift</b> : sprint · <b>Espace</b> : frein à main<br />
-          <b>E</b> : monter / descendre d'un véhicule, action · <b>J</b> : carnet · <b>H</b> : klaxon · <b>M</b> : son<br />
+          <b>E</b> : monter / descendre d'un véhicule, action · <b>J</b> : carnet · <b>C</b> : carte (poser un repère) · <b>H</b> : klaxon · <b>M</b> : son<br />
           <b>Glisser la souris</b> : tourner la caméra · <b>Entrée / Espace / clic</b> : dialogues
         </div>
         <div class="ctl-touch">Joystick à gauche · boutons à droite · glisse sur l'écran pour tourner la caméra</div>
@@ -121,6 +121,17 @@
       <div class="row">
         <button id="nb-reset" class="btn danger">Réinitialiser la progression</button>
         <button id="nb-close" class="btn primary">Fermer (J)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bigmap" class="overlay hidden">
+    <div class="card map-card">
+      <div class="map-head"><div class="card-label">CARTE</div><span>Touche la carte pour poser un repère 📍</span></div>
+      <div class="map-wrap"><canvas id="bigmap-canvas"></canvas></div>
+      <div class="row">
+        <button id="bigmap-clear" class="btn danger">Retirer le repère</button>
+        <button id="bigmap-close" class="btn primary">Fermer</button>
       </div>
     </div>
   </div>

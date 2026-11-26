@@ -11,7 +11,8 @@ import { Traffic } from './entities/traffic.js';
 import { Pedestrians } from './entities/pedestrians.js';
 import { Hud } from './ui/hud.js';
 import { Dialog, Quiz } from './ui/dialog.js';
-import { Minimap } from './ui/minimap.js';
+import { Minimap, BigMap } from './ui/minimap.js';
+import { createMarker } from './world/markers.js';
 import { Notebook, Screens } from './ui/notebook.js';
 import { MobileControls } from './ui/mobileControls.js';
 import { Settings } from './ui/settings.js';
@@ -96,6 +97,13 @@ async function init() {
   game.notebook = new Notebook(game);
   game.screens = new Screens(game);
   game.minimap = new Minimap(document.getElementById('minimap'), game.city);
+  game.waypoint = null;
+  game.setWaypoint = (pt) => {
+    if (game.waypoint) game.waypoint.marker.remove();
+    game.waypoint = pt ? { ...pt, marker: createMarker(scene, 'waypoint', pt.x, pt.z, '📍 REPÈRE') } : null;
+  };
+  game.bigmap = new BigMap(game, game.minimap);
+  document.getElementById('minimap').addEventListener('click', () => game.bigmap.open());
   game.mobileControls = new MobileControls(game.input);
   game.settings = new Settings(game);
   game.cinematic = new Cinematic(game);
@@ -186,7 +194,7 @@ async function init() {
     if (far) { far.dispose(); game.vehicles.splice(game.vehicles.indexOf(far), 1); }
   }
 
-  const modalOpen = () => game.dialog.isOpen || game.quiz.isOpen || game.notebook.isOpen || game.screens.cardOpen || game.settings.isOpen;
+  const modalOpen = () => game.dialog.isOpen || game.quiz.isOpen || game.notebook.isOpen || game.screens.cardOpen || game.settings.isOpen || game.bigmap.isOpen;
 
   // --- Boucle de jeu ---
   const clock = new THREE.Clock();
@@ -221,6 +229,7 @@ async function init() {
     // touches globales
     if (inp.action('mute')) game.settings.toggleSound();
     if (DEBUG && inp.action('debug')) game.missions.skip();
+    if (inp.action('map') && !game.dialog.isOpen && !game.quiz.isOpen && !game.screens.cardOpen) game.bigmap.toggle();
     if (inp.action('notebook') && !game.dialog.isOpen && !game.quiz.isOpen && !game.screens.cardOpen) game.notebook.toggle();
     if (game.dialog.isOpen) { game.dialog.update(dt); if (inp.action('advance')) game.dialog.advance(); }
     else if (game.screens.cardOpen && inp.action('advance')) { game.screens.closeDefinition(); }
@@ -275,13 +284,19 @@ async function init() {
     if (game.mobileControls.enabled) hint = '';
     game.hud.setHint(hint);
     game.mobileControls.setActionLabel(label, label !== 'ACTION');
-    const tgt = game.missions.target();
+    // le repère posé sur la carte est prioritaire pour la flèche ; il disparaît une fois atteint
+    const wp = game.waypoint;
+    if (wp) { wp.marker.update(dt); if (Math.hypot(wp.x - p.x, wp.z - p.z) < 9) { game.setWaypoint(null); game.hud.toast('📍 Repère atteint !', 2); game.sfx.pickup(); } }
+    const tgt = game.waypoint || game.missions.target();
+    document.body.classList.toggle('to-waypoint', !!game.waypoint);
     if (tgt) {
       const dx = tgt.x - p.x, dz = tgt.z - p.z;
       const bearing = Math.atan2(dx, dz);
       game.hud.setArrow(-angleDiff(bearing, cam.yaw), Math.hypot(dx, dz));
     } else game.hud.setArrow(null);
-    if (frame % 2 === 0 && game.settings.v.minimap) game.minimap.draw(p.x, p.z, cam.yaw, v ? v.heading : p.heading, game.missions.allPoints(), tgt, v ? 1.7 : 1.1);
+    const pts = game.missions.allPoints();
+    if (game.waypoint) pts.push({ x: game.waypoint.x, z: game.waypoint.z, kind: 'waypoint' });
+    if (frame % 2 === 0 && game.settings.v.minimap) game.minimap.draw(p.x, p.z, cam.yaw, v ? v.heading : p.heading, pts, tgt, v ? 1.7 : 1.1);
 
     if (game.talk.active && game.dialog.isOpen) { game.talk.update(dt); cam.pos.copy(camera.position); }
     else { if (game.talk.active) game.talk.end(); updateCamera(dt); }

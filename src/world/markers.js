@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { textTexture } from './textures.js';
 import { createCharacter, randomLook } from '../entities/character.js';
 
-const COLORS = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff' };
+const COLORS = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff', waypoint: '#ff3d8b' };
 const beamGeo = new THREE.CylinderGeometry(1.6, 1.6, 40, 16, 1, true);
 beamGeo.translate(0, 20, 0);
 const ringGeo = new THREE.RingGeometry(2.2, 3, 32);

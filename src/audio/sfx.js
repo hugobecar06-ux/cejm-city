@@ -12,68 +12,95 @@ export class Sfx {
       this.ctx = new AC();
       this.master = this.ctx.createGain(); this.master.gain.value = this.level;
       this.master.connect(this.ctx.destination);
-      const o1 = this.ctx.createOscillator(), o2 = this.ctx.createOscillator();
-      o1.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = 8;
-      this.filter = this.ctx.createBiquadFilter(); this.filter.type = 'lowpass'; this.filter.frequency.value = 400;
-      this.engineGain = this.ctx.createGain(); this.engineGain.gain.value = 0;
-      o1.connect(this.filter); o2.connect(this.filter); this.filter.connect(this.engineGain); this.engineGain.connect(this.master);
-      o1.start(); o2.start();
-      this.o1 = o1; this.o2 = o2;
-      this.loadF1();
+      this.buildV8();
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
 
-  // Son de Formule 1 (public/sounds/f1.mp3) : on cherche la partie la plus régulière du moteur
-  // et on la joue en boucle ; sa hauteur suit la vitesse, son volume suit l'accélération.
-  async loadF1() {
-    try {
-      const res = await fetch(`${import.meta.env.BASE_URL}sounds/f1.mp3`);
-      const buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
-      const data = buf.getChannelData(0), sr = buf.sampleRate;
-      const win = Math.floor(sr * 0.1), n = Math.floor(data.length / win);
-      const rms = new Float32Array(n);
-      for (let k = 0; k < n; k++) { let s = 0; for (let j = k * win; j < (k + 1) * win; j += 4) s += data[j] * data[j]; rms[k] = Math.sqrt(s / (win / 4)); }
-      const span = Math.min(n - 1, 20); // fenêtre de 2 s
-      let best = 0, bestScore = -1;
-      for (let k = 0; k + span < n; k++) {
-        let m = 0; for (let j = k; j < k + span; j++) m += rms[j]; m /= span;
-        let v = 0; for (let j = k; j < k + span; j++) v += (rms[j] - m) ** 2; v = Math.sqrt(v / span);
-        const score = m - v * 2.5; // fort et régulier
-        if (score > bestScore) { bestScore = score; best = k; }
+  // ---------- Moteur V8 (type Mustang) entièrement synthétisé ----------
+  // On fabrique UN cycle moteur (2 tours de vilebrequin = 8 explosions) avec l'allumage irrégulier
+  // d'un V8 « cross-plane », ce qui donne le fameux grondement « bloub-bloub ». Ce cycle est joué en boucle,
+  // et sa vitesse de lecture suit le régime (tr/min).
+  buildV8() {
+    const ctx = this.ctx, sr = ctx.sampleRate;
+    const BASE_RPM = 1000;
+    const cycle = 2 * 60 / BASE_RPM; // 0,12 s pour 2 tours à 1000 tr/min
+    const cycles = 6; // plusieurs cycles légèrement différents : plus naturel
+    const len = Math.floor(sr * cycle * cycles);
+    const buf = ctx.createBuffer(1, len, sr);
+    const d = buf.getChannelData(0);
+    // ordre d'allumage d'un V8 cross-plane : alternance irrégulière entre les deux rangées
+    const amp = [1.0, 0.62, 0.9, 0.7, 0.95, 0.58, 0.85, 0.74];
+    const jit = [0, 0.035, -0.02, 0.05, 0.01, -0.04, 0.03, -0.015];
+    for (let c = 0; c < cycles; c++) {
+      for (let k = 0; k < 8; k++) {
+        const t0 = (c + (k + jit[k] * (0.7 + Math.random() * 0.6)) / 8) * cycle;
+        const i0 = Math.floor(t0 * sr);
+        const a = amp[k] * (0.9 + Math.random() * 0.2);
+        for (let n = 0; n < sr * 0.06 && i0 + n < len; n++) {
+          const t = n / sr;
+          const pulse = Math.exp(-t / 0.0045);                          // claquement d'échappement
+          const body = Math.sin(2 * Math.PI * 92 * t) * Math.exp(-t / 0.018); // résonance du pot
+          const rumble = Math.sin(2 * Math.PI * 46 * t) * Math.exp(-t / 0.03); // grave
+          const hiss = (Math.random() * 2 - 1) * Math.exp(-t / 0.006) * 0.35;
+          d[i0 + n] += a * (pulse * 0.55 + body * 0.75 + rumble * 0.6 + hiss);
+        }
       }
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf; src.loop = true;
-      src.loopStart = (best * win) / sr; src.loopEnd = ((best + span) * win) / sr;
-      const peak = Math.max(...rms.slice(best, best + span)) || 0.3;
-      this.f1Gain = this.ctx.createGain(); this.f1Gain.gain.value = 0;
-      this.f1Norm = Math.min(3, 0.35 / peak);
-      src.connect(this.f1Gain); this.f1Gain.connect(this.master);
-      src.start(0, src.loopStart);
-      this.f1 = src;
-    } catch (e) {
-      console.warn('Son F1 indisponible, moteur synthétique utilisé', e);
+    }
+    let peak = 0; for (let n = 0; n < len; n++) peak = Math.max(peak, Math.abs(d[n]));
+    for (let n = 0; n < len; n++) d[n] /= peak || 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    // un peu de saturation pour le côté rageur
+    const shaper = ctx.createWaveShaper();
+    const curve = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(x * 2.2); }
+    shaper.curve = curve;
+    this.v8Filter = ctx.createBiquadFilter(); this.v8Filter.type = 'lowpass'; this.v8Filter.frequency.value = 500; this.v8Filter.Q.value = 2.5;
+    this.v8Gain = ctx.createGain(); this.v8Gain.gain.value = 0;
+    src.connect(shaper); shaper.connect(this.v8Filter); this.v8Filter.connect(this.v8Gain); this.v8Gain.connect(this.master);
+    src.start();
+    this.v8 = src;
+    this.v8Base = BASE_RPM;
+    this.rpm = 800;
+    this.lastThrottle = 0;
+  }
+
+  // Régime simulé avec une boîte 5 vitesses : le régime chute à chaque passage de rapport
+  rpmFor(ratio, throttle) {
+    if (ratio < 0.02) return 800 + throttle * 2600; // à l'arrêt : ralenti, coups de gaz possibles
+    const gears = [0, 0.16, 0.33, 0.52, 0.74, 1.01];
+    let g = 0; while (g < 5 && ratio > gears[g + 1]) g++;
+    const t = (ratio - gears[g]) / (gears[g + 1] - gears[g]);
+    return (g === 0 ? 1100 : 2600) + t * (g === 0 ? 4700 : 3400) + throttle * 300;
+  }
+
+  backfire() {
+    const n = 2 + Math.floor(Math.random() * 3);
+    for (let k = 0; k < n; k++) {
+      const t = this.ctx.currentTime + 0.05 + k * (0.06 + Math.random() * 0.08);
+      const len = 0.05, buf = this.ctx.createBuffer(1, this.ctx.sampleRate * len, this.ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+      const s = this.ctx.createBufferSource(), f = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+      f.type = 'bandpass'; f.frequency.value = 600 + Math.random() * 500; g.gain.value = 0.55;
+      s.buffer = buf; s.connect(f); f.connect(g); g.connect(this.master); s.start(t);
     }
   }
 
   // on : dans une voiture ; ratio : vitesse 0..1 ; throttle : accélérateur 0..1
   engine(on, ratio, throttle = 0) {
-    if (!this.ctx) return;
+    if (!this.ctx || !this.v8) return;
     const t = this.ctx.currentTime;
-    if (this.f1) {
-      this.engineGain.gain.setTargetAtTime(0, t, 0.1);
-      // à l'arrêt : ralenti grave ; en accélérant : le régime monte
-      const rate = 0.55 + ratio * 0.85 + throttle * 0.18;
-      this.f1.playbackRate.setTargetAtTime(rate, t, throttle > 0 ? 0.12 : 0.3);
-      const vol = on ? (0.22 + ratio * 0.38 + throttle * 0.4) * this.f1Norm : 0;
-      this.f1Gain.gain.setTargetAtTime(vol, t, on ? 0.08 : 0.25);
-      return;
-    }
-    const f = 45 + ratio * 130;
-    this.o1.frequency.setTargetAtTime(f, t, 0.05);
-    this.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
-    this.filter.frequency.setTargetAtTime(300 + ratio * 1400, t, 0.05);
-    this.engineGain.gain.setTargetAtTime(on ? 0.06 + ratio * 0.05 : 0, t, 0.1);
+    const target = this.rpmFor(ratio, throttle);
+    this.rpm += (target - this.rpm) * (target > this.rpm ? 0.12 : 0.08);
+    // lâcher de l'accélérateur à haut régime : pétarades
+    if (on && this.lastThrottle > 0.6 && throttle < 0.1 && this.rpm > 3800 && Math.random() < 0.7) this.backfire();
+    this.lastThrottle = throttle;
+    this.v8.playbackRate.setTargetAtTime(this.rpm / this.v8Base, t, 0.04);
+    this.v8Filter.frequency.setTargetAtTime(380 + this.rpm * 0.22 + throttle * 900, t, 0.06);
+    const vol = on ? 0.32 + throttle * 0.38 + (this.rpm / 6500) * 0.2 : 0;
+    this.v8Gain.gain.setTargetAtTime(vol, t, on ? 0.06 : 0.3);
   }
   tone(freq, dur, type = 'sine', vol = 0.2, delay = 0) {
     if (!this.ctx) return;
