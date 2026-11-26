@@ -42,18 +42,20 @@
   </div>
 
   <div id="ui" class="hidden">
-    <div id="mission-box" class="panel">
-      <div id="mission-title"></div>
-      <div id="mission-obj"></div>
-      <div id="mission-extra"></div>
+    <div id="topleft">
+      <div id="mission-box" class="panel">
+        <div id="mission-title"></div>
+        <div id="mission-obj"></div>
+        <div id="mission-extra"></div>
+      </div>
+      <div class="small-btns">
+        <button id="btn-book" class="pill-btn" title="Carnet (J)">📒 CARNET</button>
+        <button id="btn-settings" class="pill-btn" title="Réglages">⚙️ RÉGLAGES</button>
+      </div>
     </div>
     <div id="topright">
       <canvas id="minimap"></canvas>
       <div id="defcount" class="panel">Définitions : 0/10</div>
-      <div class="small-btns">
-        <button id="btn-book" class="icon-btn" title="Carnet (J)">📒</button>
-        <button id="btn-mute" class="icon-btn" title="Son (M)">🔊</button>
-      </div>
     </div>
     <div id="toasts"></div>
     <div id="compass"><svg id="arrow" viewBox="0 0 40 40"><path d="M20 3 L34 34 L20 26 L6 34 Z" fill="#ffd400" stroke="#1a0b2e" stroke-width="3" stroke-linejoin="round"/></svg><div id="dist"></div></div>
@@ -114,6 +116,23 @@
         <button id="nb-reset" class="btn danger">Réinitialiser la progression</button>
         <button id="nb-close" class="btn primary">Fermer (J)</button>
       </div>
+    </div>
+  </div>
+
+  <div id="settings" class="overlay hidden">
+    <div class="card">
+      <div class="card-label">RÉGLAGES</div>
+      <div class="set-row"><label for="set-sound">Son</label><button id="set-sound" class="toggle">Activé</button></div>
+      <div class="set-row"><label for="set-volume">Volume</label><input id="set-volume" type="range" min="0" max="100" step="5" /></div>
+      <div class="set-row"><label for="set-sens">Sensibilité de la caméra</label><input id="set-sens" type="range" min="30" max="200" step="10" /></div>
+      <div class="set-row"><label for="set-autocam">Caméra qui suit automatiquement</label><button id="set-autocam" class="toggle">Activée</button></div>
+      <div class="set-row"><label for="set-quality">Qualité graphique</label>
+        <div class="seg" id="set-quality"><button data-v="low">Basse</button><button data-v="mid">Moyenne</button><button data-v="high">Haute</button></div></div>
+      <div class="set-row touch-only"><label for="set-btnsize">Taille des commandes tactiles</label>
+        <div class="seg" id="set-btnsize"><button data-v="1">Normale</button><button data-v="1.2">Grande</button></div></div>
+      <div class="set-row"><label for="set-minimap">Mini-carte</label><button id="set-minimap" class="toggle">Affichée</button></div>
+      <p class="set-note">Les réglages sont gardés sur cet appareil.</p>
+      <button id="set-close" class="btn primary">Fermer</button>
     </div>
   </div>
 

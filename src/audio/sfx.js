@@ -2,14 +2,15 @@
 export class Sfx {
   constructor() {
     this.ctx = null;
-    try { this.muted = localStorage.getItem('dc.muted') === '1'; } catch { this.muted = false; }
+    this.level = 0.48; // volume réglé dans le panneau Réglages
   }
+  setVolume(v) { this.level = 0.6 * v; if (this.master) this.master.gain.value = this.level; }
   unlock() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       this.ctx = new AC();
-      this.master = this.ctx.createGain(); this.master.gain.value = this.muted ? 0 : 0.6;
+      this.master = this.ctx.createGain(); this.master.gain.value = this.level;
       this.master.connect(this.ctx.destination);
       const o1 = this.ctx.createOscillator(), o2 = this.ctx.createOscillator();
       o1.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = 8;
@@ -20,12 +21,6 @@ export class Sfx {
       this.o1 = o1; this.o2 = o2;
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
-  }
-  toggleMute() {
-    this.muted = !this.muted;
-    try { localStorage.setItem('dc.muted', this.muted ? '1' : '0'); } catch { /* stockage indisponible */ }
-    if (this.master) this.master.gain.value = this.muted ? 0 : 0.6;
-    return this.muted;
   }
   engine(on, ratio) {
     if (!this.ctx) return;

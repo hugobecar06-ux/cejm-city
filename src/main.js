@@ -14,6 +14,7 @@ import { Dialog, Quiz } from './ui/dialog.js';
 import { Minimap } from './ui/minimap.js';
 import { Notebook, Screens } from './ui/notebook.js';
 import { MobileControls } from './ui/mobileControls.js';
+import { Settings } from './ui/settings.js';
 import { MissionEngine } from './missions/engine.js';
 import { INTRO } from './missions/missions.js';
 
@@ -90,6 +91,7 @@ async function init() {
   game.screens = new Screens(game);
   game.minimap = new Minimap(document.getElementById('minimap'), game.city);
   game.mobileControls = new MobileControls(game.input);
+  game.settings = new Settings(game);
   game.missions = new MissionEngine(game);
   game.save = loadSave() || { completed: 0, introSeen: false };
   game.saveProgress = () => { game.save.completed = game.missions.completed; writeSave(game.save); };
@@ -118,10 +120,7 @@ async function init() {
   newBtn.addEventListener('click', () => start(true));
   document.getElementById('loading').classList.add('hidden');
   titleEl.classList.remove('hidden');
-  const muteBtn = document.getElementById('btn-mute');
-  const updMute = () => { muteBtn.textContent = game.sfx.muted ? '🔇' : '🔊'; };
-  updMute();
-  muteBtn.addEventListener('click', () => { game.sfx.unlock(); game.sfx.toggleMute(); updMute(); });
+  document.getElementById('btn-settings').addEventListener('click', () => game.sfx.unlock());
   document.getElementById('btn-book').addEventListener('click', () => game.notebook.toggle());
   window.addEventListener('pointerdown', () => game.sfx.unlock(), { once: true });
 
@@ -136,10 +135,11 @@ async function init() {
   const tmp = new THREE.Vector3();
   function updateCamera(dt) {
     const inp = game.input, p = game.player, v = p.vehicle;
-    cam.yaw -= inp.dragX * 0.006;
-    cam.pitch = clamp(cam.pitch + inp.dragY * 0.004, 0.05, 1.1);
+    const sens = game.settings.v.sens / 100;
+    cam.yaw -= inp.dragX * 0.006 * sens;
+    cam.pitch = clamp(cam.pitch + inp.dragY * 0.004 * sens, 0.05, 1.1);
     const now = performance.now() / 1000;
-    if (now - inp.lastDrag > 1.5) {
+    if (game.settings.v.autocam && now - inp.lastDrag > 1.5) {
       if (v && Math.abs(v.speed) > 2) cam.yaw += angleDiff(v.heading, cam.yaw) * Math.min(1, dt * 2.5);
       else if (!v && p.moveSpeed > 0.5) cam.yaw += angleDiff(p.heading, cam.yaw) * Math.min(1, dt * 1.2);
     }
@@ -175,7 +175,7 @@ async function init() {
     if (far) { far.dispose(); game.vehicles.splice(game.vehicles.indexOf(far), 1); }
   }
 
-  const modalOpen = () => game.dialog.isOpen || game.quiz.isOpen || game.notebook.isOpen || game.screens.cardOpen;
+  const modalOpen = () => game.dialog.isOpen || game.quiz.isOpen || game.notebook.isOpen || game.screens.cardOpen || game.settings.isOpen;
 
   // --- Boucle de jeu ---
   const clock = new THREE.Clock();
@@ -198,7 +198,7 @@ async function init() {
       return;
     }
     // touches globales
-    if (inp.action('mute')) { game.sfx.toggleMute(); updMute(); }
+    if (inp.action('mute')) game.settings.toggleSound();
     if (DEBUG && inp.action('debug')) game.missions.skip();
     if (inp.action('notebook') && !game.dialog.isOpen && !game.quiz.isOpen && !game.screens.cardOpen) game.notebook.toggle();
     if (game.dialog.isOpen) { game.dialog.update(dt); if (inp.action('advance')) game.dialog.advance(); }
@@ -253,7 +253,7 @@ async function init() {
       const bearing = Math.atan2(dx, dz);
       game.hud.setArrow(-angleDiff(bearing, cam.yaw), Math.hypot(dx, dz));
     } else game.hud.setArrow(null);
-    if (frame % 2 === 0) game.minimap.draw(p.x, p.z, cam.yaw, v ? v.heading : p.heading, game.missions.allPoints(), tgt, v ? 1.7 : 1.1);
+    if (frame % 2 === 0 && game.settings.v.minimap) game.minimap.draw(p.x, p.z, cam.yaw, v ? v.heading : p.heading, game.missions.allPoints(), tgt, v ? 1.7 : 1.1);
 
     updateCamera(dt);
     if (shadows) {
