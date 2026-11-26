@@ -27,20 +27,20 @@ export class Parkour {
     const c = [[1, 0], [0, 1], [-1, 0], [0, -1]][rot];
     const R = (lx, lz) => [cx + lx * c[0] - lz * c[1], cz + lx * c[1] + lz * c[0]];
     const ax = (dx, dz) => [dx * c[0] - dz * c[1], dx * c[1] + dz * c[0]]; // direction tournée
-    const half = 1.45 - level * 0.05; // grandes plateformes
-    const gap = 3.3 + level * 0.1; // espace entre bords : 0,5 à 1 m seulement
+    const half = 1.6; // grandes marches
+    const gap = 3.2; // marches collées : aucun vide
     // Tracé en « L » le long de deux bords du parc, qui monte progressivement
     const pts = [];
-    let lx = -11.5, lz = 11.2, top = 0.7;
+    let lx = -11.5, lz = 11.2, top = 0.3; // première marche basse
     const n1 = Math.floor(22.7 / gap) + 1;
-    for (let k = 0; k < n1; k++) { pts.push([lx, lz, top]); lx += gap; if (k % 3 !== 1) top += 0.55; }
+    for (let k = 0; k < n1; k++) { pts.push([lx, lz, top]); lx += gap; top += 0.3; } // marches basses : on monte en marchant
     lx = 11.2; lz = 11.2 - gap;
-    while (lz > -11.5) { pts.push([lx, lz, top]); lz -= gap; top += 0.55; }
+    while (lz > -11.5) { pts.push([lx, lz, top]); lz -= gap; top += 0.3; }
     // parcours plus court aux premiers niveaux : 5 plateformes au niveau 1 … 9 au niveau 5
     pts.length = Math.min(pts.length, 4 + Math.ceil(level / 2));
     this.group = new THREE.Group();
     // Lave sous le parcours (niveau ≥ 2) : la toucher = retour au départ
-    if (level >= 2) {
+    if (false) { // plus de lave : parcours très simple
       for (const [w, d, x, z] of [[25, 5, 0, 11.2], [5, 25, 11.2, 0]]) {
         const lava = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), lavaMat);
         const [px, pz] = R(x, z);
@@ -61,7 +61,7 @@ export class Parkour {
       this.group.add(mesh);
       const p = { x, z, bx: x, bz: z, half: h, top: ptop, mesh, active: true, move: null, crumble: null };
       if (!last && k > 0) {
-        if (level >= 4 && k % 3 === 2) {
+        if (false) { // plus de plateformes mobiles
           const [mx, mz] = ax(plz > 11 ? 0 : 1, plz > 11 ? 1 : 0); // bouge doucement sur le côté
           p.move = { dx: mx, dz: mz, amp: 0.9, speed: 0.7, phase: k };
         }

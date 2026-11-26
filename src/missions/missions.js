@@ -89,7 +89,7 @@ export const MISSIONS = [
       { type: 'dialog', lines: [
         ['Léa', 'Oups, le contrat Dupuis s\'est envolé en haut des échafaudages du parc ! Grimpe à pied en sautant (bouton SAUTER, ou Espace).'],
       ] },
-      { type: 'collect', course: { block: [1, 4], rot: 0, level: 1 }, objective: 'Parcours : grimpe récupérer le contrat Dupuis', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+      { type: 'collect', course: { block: [1, 4], rot: 0, level: 1 }, objective: 'Parcours : grimpe récupérer le contrat Dupuis', counter: () => "Monte les marches jusqu'en haut !", items: [
         { pos: 'course', label: 'Contrat Dupuis', msg: 'Contrat Dupuis récupéré !' },
       ] },
       { type: 'goto', target: 'datacenter', objective: 'Apporte les dossiers au Data Center', hazards: [{ type: 'travaux', at: [120, 110], dir: 'z' }] },
@@ -136,9 +136,9 @@ export const MISSIONS = [
     steps: [
       { type: 'dialog', lines: [
         ['Sam', "ClicShop n'a aucun magasin, tout se vend sur le site et l'appli : on est un pure player ! Ce soir, c'est le rush."],
-        ['Sam', '3 colis urgents à livrer dans le quartier. Tu as 4 minutes, prends une voiture !'],
+        ['Sam', '3 colis urgents à livrer dans le quartier. Tu as 6 minutes, prends une voiture !'],
       ] },
-      { type: 'collect', time: 240, objective: 'Livre les 3 colis ClicShop', hazards: [{ type: 'mamies', at: [80, -100], dir: 'z' }], counter: (n, t) => `Colis livrés : ${n}/${t}`, items: [
+      { type: 'collect', time: 360, objective: 'Livre les 3 colis ClicShop', hazards: [{ type: 'mamies', at: [80, -100], dir: 'z' }], counter: (n, t) => `Colis livrés : ${n}/${t}`, items: [
         { pos: [120, -190], label: 'Livraison : Mme Petit', msg: 'Colis livré à Mme Petit !' },
         { pos: [200, -50], label: 'Livraison : M. Nguyen', msg: 'Colis livré à M. Nguyen !' },
         { pos: [80, -80], label: 'Livraison : Léo', msg: 'Colis livré à Léo !' },
@@ -146,7 +146,7 @@ export const MISSIONS = [
       { type: 'dialog', lines: [
         ['Sam', 'Aïe… un drone de livraison a lâché un colis sur les plateformes du parc, près de l\'entrepôt !'],
       ] },
-      { type: 'collect', course: { block: [8, 1], rot: 1, level: 1 }, objective: 'Parcours : récupère le colis du drone', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+      { type: 'collect', course: { block: [8, 1], rot: 1, level: 1 }, objective: 'Parcours : récupère le colis du drone', counter: () => "Monte les marches jusqu'en haut !", items: [
         { pos: 'course', label: 'Colis du drone', msg: 'Colis du drone récupéré !' },
       ] },
       { type: 'dialog', lines: [
@@ -169,10 +169,10 @@ export const MISSIONS = [
         ['Léa', 'Teste l\'appli : deviens chauffeur UBIK ! Ta première cliente, Inès, t\'attend.'],
       ] },
       { type: 'goto', target: [-153.75, 100], car: true, npc: N('Inès'), objective: 'Course UBIK : récupère Inès (en voiture)' },
-      { type: 'goto', target: 'hq', car: true, time: 85, hazards: [{ type: 'police', at: [-34, 0], dir: 'x' }, { type: 'mamies', at: [-6, 0], dir: 'x' }, { type: 'huile', at: [-80, 60], dir: 'z' }], objective: 'Dépose Inès au CEJM City HQ', done: 'Inès descend : ★★★★★' },
+      { type: 'goto', target: 'hq', car: true, time: 150, hazards: [{ type: 'mamies', at: [-6, 0], dir: 'x' }], objective: 'Dépose Inès au CEJM City HQ', done: 'Inès descend : ★★★★★' },
       { type: 'dialog', lines: [['UBIK', '🔔 Nouvelle course disponible ! Karim t\'attend. Destination : le Café Wifi.']] },
       { type: 'goto', target: [126.25, 160], car: true, npc: N('Karim'), objective: 'Course UBIK : récupère Karim (en voiture)' },
-      { type: 'goto', target: 'cafe', car: true, time: 95, hazards: [{ type: 'travaux', at: [114, -80], dir: 'x' }, { type: 'huile', at: [92, -80], dir: 'x' }, { type: 'mamies', at: [120, 30], dir: 'z' }], objective: 'Dépose Karim au Café Wifi', done: 'Karim descend : ★★★★★' },
+      { type: 'goto', target: 'cafe', car: true, time: 160, hazards: [{ type: 'travaux', at: [114, -80], dir: 'x' }], objective: 'Dépose Karim au Café Wifi', done: 'Karim descend : ★★★★★' },
       { type: 'dialog', lines: [
         ['UBIK', 'Courses terminées ! Ta note de chauffeur : 4,8 ★. Prix calculé dans l\'appli, paiement sans contact.'],
         ['Léa', "Voilà l'uberisation : une plateforme met directement en relation, en temps réel, des clients et des particuliers ou indépendants."],
@@ -200,7 +200,7 @@ export const MISSIONS = [
       { type: 'dialog', lines: [
         ['Nadia', 'Dernière chose : Malo veut prêter son cerf-volant… mais il est coincé tout en haut du parcours du parc !'],
       ] },
-      { type: 'collect', course: { block: [6, 5], rot: 2, level: 2 }, objective: 'Parcours : décroche le cerf-volant de Malo', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+      { type: 'collect', course: { block: [6, 5], rot: 2, level: 2 }, objective: 'Parcours : décroche le cerf-volant de Malo', counter: () => "Monte les marches jusqu'en haut !", items: [
         { pos: 'course', label: 'Cerf-volant', msg: 'Cerf-volant prêté par Malo' },
       ] },
       { type: 'goto', target: 'partag', objective: "Rapporte tout au local Partag'Voisins" },
@@ -231,7 +231,7 @@ export const MISSIONS = [
       { type: 'dialog', lines: [
         ['Léa', 'Ça ne capte pas ici ! Grimpe en haut du parcours du parc pour lire les avis sur les réseaux sociaux.'],
       ] },
-      { type: 'collect', course: { block: [4, 6], rot: 3, level: 2 }, objective: 'Parcours : grimpe capter le réseau', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+      { type: 'collect', course: { block: [4, 6], rot: 3, level: 2 }, objective: 'Parcours : grimpe capter le réseau', counter: () => "Monte les marches jusqu'en haut !", items: [
         { pos: 'course', label: 'Réseau 4G', msg: 'Avis sur les réseaux sociaux : 92 % recommandent Prix+' },
       ] },
       { type: 'goto', target: 'techstore', objective: 'Retourne à TechStore avec M. Dupont' },
@@ -262,7 +262,7 @@ export const MISSIONS = [
       { type: 'dialog', lines: [
         ['Léa', 'Une photographe veut vendre ses tirages sur LA PLACE… elle fait des photos tout en haut du parcours du parc. Rejoins-la !'],
       ] },
-      { type: 'collect', course: { block: [1, 4], rot: 2, level: 3 }, objective: 'Parcours : rejoins la Photographe', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+      { type: 'collect', course: { block: [1, 4], rot: 2, level: 3 }, objective: 'Parcours : rejoins la Photographe', counter: () => "Monte les marches jusqu'en haut !", items: [
         { pos: 'course', label: 'La Photographe', msg: 'La Photographe rejoint LA PLACE !' },
       ] },
       { type: 'goto', target: 'laplace', objective: 'Retourne à La Place', onDone: (ctx) => ctx.spawnStalls() },
@@ -281,9 +281,9 @@ export const MISSIONS = [
     steps: [
       { type: 'dialog', lines: [
         ['Léa', "J'ai lancé LIEN, mon réseau social. Petit problème : il n'a que 2 membres… toi et moi."],
-        ['Léa', 'Et personne ne veut d\'un réseau vide ! Inscris 6 personnes autour du HQ en 3 minutes.'],
+        ['Léa', 'Et personne ne veut d\'un réseau vide ! Inscris 6 personnes autour du HQ en 5 minutes.'],
       ] },
-      { type: 'collect', npc: true, network: true, time: 180, objective: 'Inscris 6 personnes sur LIEN',
+      { type: 'collect', npc: true, network: true, time: 300, objective: 'Inscris 6 personnes sur LIEN',
         counter: (n) => { const m = n + 2; return `Membres : ${m} — Connexions possibles : ${(m * (m - 1)) / 2}`; },
         items: [
           { pos: [-6.25, -30], label: 'Hugo', msg: 'Hugo s\'inscrit sur LIEN !' },
@@ -317,7 +317,7 @@ export const MISSIONS = [
         explain: 'Exact ! Avec la LLD, on paie l\'usage de la voiture sans en devenir propriétaire.' },
       { type: 'dialog', lines: [['Léa', "Et si tu n'as besoin d'une voiture que pour 40 minutes ? Va à la station Loc'Auto."]] },
       { type: 'goto', target: 'locauto', objective: "Va à la station Loc'Auto", onDone: (ctx) => ctx.spawnRental() },
-      { type: 'collect', rings: true, ordered: true, car: 'rental', time: 60, objective: "Rallye : passe les 4 anneaux avec la voiture Loc'Auto",
+      { type: 'collect', rings: true, ordered: true, car: 'rental', time: 150, objective: "Rallye : passe les 4 anneaux avec la voiture Loc'Auto",
         counter: (n, t) => `Anneaux : ${n}/${t}`, items: [
           { pos: [-80, 100], label: 'Anneau 1', msg: 'Anneau 1 !' },
           { pos: [-40, 80], label: 'Anneau 2', msg: 'Anneau 2 !' },
@@ -372,14 +372,14 @@ export const BONUS = {
     { type: 'goto', target: 'ferme', car: 'trailer', objective: 'Fonce à la Ferme Dubois avec la remorque',
       hazards: [{ type: 'mamies', at: [-120, 160], dir: 'x' }, { type: 'huile', at: [-160, 140], dir: 'z' }] },
     { type: 'dialog', lines: [['Léa', 'Charge 4 bottes de foin sur la remorque… vite, avant qu\'il se réveille !']] },
-    { type: 'collect', bales: true, time: 90, chaser: [-180, 192], objective: 'Charge les bottes de foin sur la remorque',
+    { type: 'collect', bales: true, time: 180, chaser: [-180, 192], objective: 'Charge les bottes de foin sur la remorque',
       counter: (n, t) => `Bottes chargées : ${n}/${t}`, items: [
         { pos: [-186, 170], label: 'Botte de foin', msg: 'Botte chargée !' },
         { pos: [-174, 169], label: 'Botte de foin', msg: 'Botte chargée !' },
         { pos: [-184, 176], label: 'Botte de foin', msg: 'Botte chargée !' },
         { pos: [-176, 177], label: 'Botte de foin', msg: 'Botte chargée !' },
       ] },
-    { type: 'goto', target: 'laplace', car: 'trailer', time: 120, objective: 'Livre le foin à LA PLACE (avec la remorque !)',
+    { type: 'goto', target: 'laplace', car: 'trailer', time: 240, objective: 'Livre le foin à LA PLACE (avec la remorque !)',
       hazards: [{ type: 'police', at: [-100, 120], dir: 'z' }, { type: 'travaux', at: [-60, -100], dir: 'z' }, { type: 'mamies', at: [-60, -40], dir: 'z' }, { type: 'huile', at: [-140, 0], dir: 'z' }] },
     { type: 'dialog', lines: [
       ['Vendeur', 'Du foin bio, livré en remorque ? Parfait, je prends tout !'],

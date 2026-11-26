@@ -275,7 +275,7 @@ export class MissionEngine {
       if (this.timer <= 0) { this.failStep(); return; }
     }
     const inCar = !!g.player.vehicle;
-    const r = inCar ? 6.5 : 4.5;
+    const r = inCar ? 9 : 6; // zones larges : facile à attraper
     if (s.type === 'goto') {
       if (Math.hypot(px - this.goal.x, pz - this.goal.z) < r) {
         const ok = !s.car || (s.car === 'rental' ? g.player.vehicle?.rental : s.car === 'trailer' ? g.trailer.attachedToPlayer : inCar);
