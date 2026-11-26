@@ -1,4 +1,4 @@
-# DIGITAL CITY — le jeu de l'économie numérique
+# CEJM NEON CITY — le jeu de l'économie numérique
 
 Jeu 3D en monde ouvert (Three.js) jouable dans le navigateur, sur PC et mobile, pour les étudiants de BTS NDRC.
 Le joueur termine 10 missions, et chacune débloque la définition d'une notion de l'économie numérique.
@@ -45,15 +45,18 @@ Sur mobile : joystick à gauche, boutons ACTION / FREIN / CARNET à droite, glis
 
 ## Redéployer
 
-Le dépôt contient un workflow GitHub Actions (`.github/workflows/deploy.yml`) : **chaque `git push` sur `main` reconstruit et publie automatiquement le jeu sur GitHub Pages**.
+Le jeu publié est servi par GitHub Pages depuis la branche `gh-pages`. Après une modification :
 
 ```bash
 git add .
 git commit -m "Modification des missions"
 git push
+npm run deploy
 ```
 
-Le jeu est en ligne quelques minutes plus tard à l'adresse `https://<pseudo>.github.io/digital-city/`.
+`npm run deploy` compile le jeu et publie le dossier `dist/` sur la branche `gh-pages`.
+
+Le jeu est en ligne quelques minutes plus tard à l'adresse `https://<pseudo>.github.io/cejm-neon-city/`.
 
 ## Technique
 

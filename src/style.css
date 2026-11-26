@@ -15,6 +15,7 @@ button { font-family: inherit; cursor: pointer; }
 .title-card { text-align: center; max-width: 760px; }
 .logo { font-family: Anton, Impact, sans-serif; font-size: clamp(54px, 13vw, 128px); line-height: 0.95; letter-spacing: 3px; color: #fff; text-shadow: 0 0 18px var(--pink), 4px 4px 0 var(--pink), 8px 8px 0 #2b1055; }
 .logo span { color: var(--cyan); text-shadow: 0 0 18px var(--cyan), 4px 4px 0 #2b1055; }
+.logo > small { display: block; font-size: 0.42em; letter-spacing: 12px; color: var(--orange); text-shadow: 0 0 14px var(--orange), 3px 3px 0 #2b1055; margin-bottom: 6px; }
 .logo.small { font-size: clamp(36px, 8vw, 64px); text-align: center; }
 .subtitle { font-weight: 800; font-size: clamp(16px, 3.4vw, 22px); margin: 18px 0 26px; text-shadow: 0 2px 6px #000; }
 .title-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
