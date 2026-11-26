@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Digital City — Le jeu de l'économie numérique</title>
+  <meta name="description" content="10 missions pour maîtriser l'économie numérique : un jeu 3D en monde ouvert, jouable dans le navigateur, pour les étudiants de BTS NDRC." />
+  <meta name="theme-color" content="#2b1055" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Digital City — Le jeu de l'économie numérique" />
+  <meta property="og:description" content="Vole des voitures, termine 10 missions et débloque les 10 définitions de l'économie numérique. Jouable sur PC et mobile, sans installation." />
+  <meta property="og:image" content="%VITE_SITE_URL%og-image.png" />
+  <meta property="og:url" content="%VITE_SITE_URL%" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="loading">Chargement de Digital City…</div>
+
+  <div id="title" class="overlay hidden">
+    <div class="title-card">
+      <div class="logo">DIGITAL <span>CITY</span></div>
+      <div class="subtitle">10 missions pour maîtriser l'économie numérique</div>
+      <div class="title-btns">
+        <button id="btn-play" class="btn primary">Jouer</button>
+        <button id="btn-new" class="btn hidden">Nouvelle partie</button>
+      </div>
+      <div class="controls">
+        <div class="ctl-desktop">
+          <b>Z/Q/S/D</b> ou <b>flèches</b> : se déplacer / conduire · <b>Shift</b> : sprint · <b>Espace</b> : frein à main<br />
+          <b>E</b> : monter / descendre d'un véhicule, action · <b>J</b> : carnet · <b>H</b> : klaxon · <b>M</b> : son<br />
+          <b>Glisser la souris</b> : tourner la caméra · <b>Entrée / Espace / clic</b> : dialogues
+        </div>
+        <div class="ctl-touch">Joystick à gauche · boutons à droite · glisse sur l'écran pour tourner la caméra</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ui" class="hidden">
+    <div id="mission-box" class="panel">
+      <div id="mission-title"></div>
+      <div id="mission-obj"></div>
+      <div id="mission-extra"></div>
+    </div>
+    <div id="topright">
+      <canvas id="minimap"></canvas>
+      <div id="defcount" class="panel">Définitions : 0/10</div>
+      <div class="small-btns">
+        <button id="btn-book" class="icon-btn" title="Carnet (J)">📒</button>
+        <button id="btn-mute" class="icon-btn" title="Son (M)">🔊</button>
+      </div>
+    </div>
+    <div id="toasts"></div>
+    <div id="compass"><svg id="arrow" viewBox="0 0 40 40"><path d="M20 3 L34 34 L20 26 L6 34 Z" fill="#ffd400" stroke="#1a0b2e" stroke-width="3" stroke-linejoin="round"/></svg><div id="dist"></div></div>
+    <div id="banner"></div>
+    <div id="hint"></div>
+    <div id="speedo"><span id="speed-val">0</span><small>km/h</small></div>
+
+    <div id="yield" class="panel hidden">
+      <div class="y-title">BILLETTERIE DU ZÉNITH — PRIX EN DIRECT</div>
+      <div id="yield-price">45 €</div>
+      <div id="yield-demand">Demande : moyenne</div>
+      <div class="y-rule">Achète quand le prix passe sous 30 €</div>
+      <div id="yield-feedback"></div>
+    </div>
+
+    <div id="dialog" class="hidden">
+      <div id="dlg-name"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-next">Suivant ▸</div>
+    </div>
+
+    <div id="mobile">
+      <div id="joy"><div id="joy-knob"></div></div>
+      <div id="m-btns">
+        <button id="m-action" class="m-btn big">ACTION</button>
+        <button id="m-brake" class="m-btn">FREIN</button>
+        <button id="m-book" class="m-btn">CARNET</button>
+        <button id="m-horn" class="m-btn">📯</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="overlay hidden">
+    <div class="card">
+      <div class="card-label">QUIZ</div>
+      <div id="quiz-q"></div>
+      <div id="quiz-answers"></div>
+      <div id="quiz-feedback"></div>
+      <button id="quiz-continue" class="btn primary hidden">Continuer</button>
+    </div>
+  </div>
+
+  <div id="defcard" class="overlay hidden">
+    <div class="card def">
+      <div class="card-label pink">DÉFINITION DÉBLOQUÉE</div>
+      <div id="def-num"></div>
+      <div id="def-term"></div>
+      <p id="def-text"></p>
+      <p id="def-ex"></p>
+      <button id="def-continue" class="btn primary">Continuer</button>
+    </div>
+  </div>
+
+  <div id="notebook" class="overlay hidden">
+    <div class="card wide">
+      <div class="card-label">CARNET DE DÉFINITIONS</div>
+      <div id="nb-list"></div>
+      <div class="row">
+        <button id="nb-reset" class="btn danger">Réinitialiser la progression</button>
+        <button id="nb-close" class="btn primary">Fermer (J)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="endscreen" class="overlay hidden">
+    <div class="card wide">
+      <div class="logo small">FÉLICITATIONS !</div>
+      <p class="end-sub">Tu as terminé les 10 missions et maîtrisé les règles de l'économie numérique. Léa est fière de toi : Digital City Corp est devenue un empire !</p>
+      <ol id="end-list"></ol>
+      <button id="end-continue" class="btn primary">Continuer à explorer</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
