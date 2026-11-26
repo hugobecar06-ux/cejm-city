@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MISSIONS, DEFINITIONS, FAIL_LINES } from './missions.js';
+import { MISSIONS, DEFINITIONS, FAIL_LINES, BONUS } from './missions.js';
 import { createMarker, createNPC } from '../world/markers.js';
 import { Vehicle } from '../entities/vehicle.js';
 
@@ -23,6 +23,12 @@ export class MissionEngine {
       spawnStalls: () => game.city.spawnStalls(),
       spawnRental: () => this.spawnRental(),
       toast: (t) => game.hud.toast(t),
+      attachTrailer: () => { if (game.player.vehicle) game.trailer.attach(game.player.vehicle); game.hud.toast('Remorque attachée !', 2); },
+      resetTrailer: () => { const t = game.trailer; t.detach(); t.pos = { x: BONUS.startPos[0], z: BONUS.startPos[1] + 6 }; t.heading = 0; t.setBales(0); t.sync();
+        // une voiture garée juste à côté pour tirer la remorque
+        const v = new Vehicle(game, { x: BONUS.startPos[0] - 4.3, z: BONUS.startPos[1] - 4, heading: 0, color: '#6d4c41' });
+        game.vehicles.push(v);
+      },
     };
   }
 
@@ -38,20 +44,38 @@ export class MissionEngine {
     return { x: p[0], z: p[1] };
   }
 
-  get mission() { return MISSIONS[this.mi]; }
+  get mission() { return this.cur || MISSIONS[this.mi]; }
   get step() { return this.mission?.steps[this.si]; }
 
   refreshStart() {
     if (this.startMarker) { this.startMarker.remove(); this.startMarker = null; }
-    if (this.active || this.completed >= MISSIONS.length) return;
+    if (this.bonusMarker) { this.bonusMarker.remove(); this.bonusMarker = null; }
+    if (this.active) return;
+    // mission bonus (remorque + foin) : disponible après la mission 1
+    if (this.completed >= 1 && !this.game.save.bonusDone) {
+      const b = BONUS.startPos;
+      this.bonusMarker = createMarker(this.game.scene, 'bonus', b[0], b[1], 'MISSION BONUS : LE CASSE DU FOIN');
+    }
+    if (this.completed >= MISSIONS.length) return;
     const m = MISSIONS[this.completed];
     const lm = this.game.city.landmarks[m.start];
     this.startMarker = createMarker(this.game.scene, 'start', lm.door.x, lm.door.z, `MISSION ${this.completed + 1} : ${lm.name}`);
   }
 
+  startBonus() {
+    this.active = true;
+    this.cur = BONUS;
+    this.si = 0;
+    this.refreshStart();
+    this.game.hud.banner('MISSION BONUS', BONUS.title);
+    this.game.sfx.success(true);
+    this.runStep();
+  }
+
   startMission() {
     this.active = true;
     this.mi = this.completed;
+    this.cur = MISSIONS[this.mi];
     this.si = 0;
     this.refreshStart();
     this.game.hud.banner(`MISSION ${this.mi + 1}/10`, this.mission.title);
@@ -62,10 +86,12 @@ export class MissionEngine {
   clearStep() {
     this.markers.forEach((m) => m.remove()); this.markers = [];
     this.npcs.forEach((n) => n.remove()); this.npcs = [];
+    this.chaser = null;
     this.items = [];
     this.goal = null;
     this.timer = null;
     if (this.lines) { this.game.scene.remove(this.lines); this.lines.geometry.dispose(); this.lines = null; }
+    this.game.hazards?.clear();
     this.game.hud.hideYield();
   }
 
@@ -74,9 +100,11 @@ export class MissionEngine {
     const g = this.game;
     this.clearStep();
     s.onStart?.(this.ctx);
+    if (s.hazards) g.hazards.spawn(s.hazards);
     this.timer = s.time ? s.time : null;
     if (s.type === 'dialog') {
-      g.dialog.show(s.lines, () => this.completeStep());
+      g.talk.start(s.lines);
+      g.dialog.show(s.lines, () => { g.talk.end(); this.completeStep(); });
     } else if (s.type === 'quiz') {
       g.quiz.show(s, () => this.completeStep());
     } else if (s.type === 'goto') {
@@ -87,11 +115,20 @@ export class MissionEngine {
       if (s.npc) this.npcs.push(createNPC(g.scene, p.x, p.z));
     } else if (s.type === 'collect') {
       this.collected = 0;
+      const course = s.course ? g.parkour.spawn(s.course) : null;
       for (const it of s.items) {
-        const p = this.resolvePos(it.pos);
+        const p = it.pos === 'course' ? { ...course.top } : this.resolvePos(it.pos);
         const item = { ...p, it, done: false, marker: createMarker(g.scene, 'item', p.x, p.z, it.label) };
+        if (p.y) item.marker.group.position.y = p.y;
         if (s.npc) item.npc = createNPC(g.scene, p.x, p.z);
         this.items.push(item);
+      }
+      if (s.chaser) { // le fermier en colère court après le joueur
+        const [cx, cz] = s.chaser;
+        this.chaser = createNPC(g.scene, cx, cz, { skin: '#f1c27d', shirt: '#8d6e63', pants: '#1a237e', hair: '#5d4037', cap: '#43a047' });
+        this.npcs.push(this.chaser);
+        this.chaserCool = 2;
+        g.hud.toast('M. Dubois : « Hé ! Mon foin ! Revenez ici ! »', 3);
       }
       if (s.network) {
         const geo = new THREE.BufferGeometry();
@@ -128,15 +165,28 @@ export class MissionEngine {
   finishMission() {
     const g = this.game;
     this.active = false;
+    g.parkour.clear(); // les plateformes du parcours disparaissent à la fin de la mission
+    g.sfx.success();
+    if (this.cur === BONUS) { // mission bonus : pas de définition
+      g.trailer.detach();
+      g.save.bonusDone = true; g.saveProgress();
+      g.screens.cardOpen = true;
+      g.cinematic.playMini('BONUS', BONUS.title, () => { g.screens.cardOpen = false; this.refreshStart(); this.updateHud(); });
+      return;
+    }
     this.completed = Math.max(this.completed, this.mi + 1);
     g.saveProgress();
-    g.sfx.success();
     g.hud.setDefs(this.completed);
-    g.screens.showDefinition(this.mi, DEFINITIONS[this.mi], () => {
-      if (this.completed >= MISSIONS.length) g.screens.showEnd();
+    g.screens.cardOpen = true;
+    g.cinematic.playMini(this.mi + 1, this.mission.title, () => g.screens.showDefinition(this.mi, DEFINITIONS[this.mi], () => {
+      if (this.completed >= MISSIONS.length) {
+        // grande cinématique de fin, puis l'écran de félicitations
+        if (this.mi === MISSIONS.length - 1) { g.screens.cardOpen = true; g.cinematic.play(() => g.screens.showEnd()); }
+        else g.screens.showEnd();
+      }
       this.refreshStart();
       this.updateHud();
-    });
+    }));
   }
 
   spawnRental() {
@@ -194,6 +244,10 @@ export class MissionEngine {
       this.startMarker.update(dt);
       if (Math.hypot(px - this.startMarker.x, pz - this.startMarker.z) < 4.5) this.startMission();
     }
+    if (this.bonusMarker) {
+      this.bonusMarker.update(dt);
+      if (!this.active && Math.hypot(px - this.bonusMarker.x, pz - this.bonusMarker.z) < 4.5) this.startBonus();
+    }
     this.npcs.forEach((n) => n.update(dt, px, pz));
     this.items.forEach((i) => i.npc && i.npc.update(dt, px, pz));
     g.hud.setHintOverride(null);
@@ -207,24 +261,41 @@ export class MissionEngine {
     const r = inCar ? 6.5 : 4.5;
     if (s.type === 'goto') {
       if (Math.hypot(px - this.goal.x, pz - this.goal.z) < r) {
-        const ok = !s.car || (s.car === 'rental' ? g.player.vehicle?.rental : inCar);
+        const ok = !s.car || (s.car === 'rental' ? g.player.vehicle?.rental : s.car === 'trailer' ? g.trailer.attachedToPlayer : inCar);
         if (ok) {
           if (s.npc) g.hud.toast(`${s.npc.name} monte à bord`);
           g.sfx.pickup();
           this.completeStep();
           return;
         }
-        g.hud.setHintOverride(s.car === 'rental' ? "Il faut arriver avec la voiture LOC'AUTO !" : 'Il te faut un véhicule pour cette étape !');
+        g.hud.setHintOverride(s.car === 'trailer' ? 'Il faut arriver avec la voiture qui tire la remorque !' : s.car === 'rental' ? "Il faut arriver avec la voiture LOC'AUTO !" : 'Il te faut un véhicule pour cette étape !');
       }
     } else if (s.type === 'collect') {
+      if (this.chaser) {
+        const ch = this.chaser, dx = px - ch.x, dz = pz - ch.z, d = Math.hypot(dx, dz);
+        this.chaserCool -= dt;
+        if (d > 1.2) { ch.x += (dx / d) * 3.6 * dt; ch.z += (dz / d) * 3.6 * dt; }
+        ch.c.group.position.set(ch.x, 0.12, ch.z);
+        ch.c.animate(dt, 3.6);
+        if (d < 1.6 && this.chaserCool <= 0 && !g.player.vehicle) {
+          this.chaserCool = 3;
+          if (this.timer !== null) this.timer = Math.max(1, this.timer - 8);
+          g.hud.toast('Le fermier t\'a attrapé par le col ! −8 s', 2.5);
+          g.sfx.fail();
+          g.player.pos.x += (dx / (d || 1)) * 4; g.player.pos.z += (dz / (d || 1)) * 4;
+        }
+      }
       for (const i of this.items) {
         if (i.done || Math.hypot(px - i.x, pz - i.z) > r) continue;
+        if (i.y && (inCar || g.player.y < i.y - 0.6)) continue; // objet en hauteur : à atteindre à pied, en sautant
         i.done = true;
         this.collected++;
+        if (s.bales) g.trailer.setBales(this.collected);
         i.marker.remove();
         if (i.npc && !s.network) { i.npc.remove(); i.npc = null; }
         g.hud.toast(i.it.msg, s.items.length <= 3 ? 5 : 3);
         g.sfx.pickup();
+        g.cinematic.pickupFx(i.x, i.y || 0, i.z);
         if (s.network) this.updateNetwork();
       }
       if (this.collected >= this.items.length) {
@@ -271,6 +342,7 @@ export class MissionEngine {
   allPoints() {
     const out = [];
     if (this.startMarker) out.push({ x: this.startMarker.x, z: this.startMarker.z, kind: 'start' });
+    if (this.bonusMarker && !this.active) out.push({ x: this.bonusMarker.x, z: this.bonusMarker.z, kind: 'bonus' });
     if (this.goal) out.push({ ...this.goal, kind: 'goal' });
     for (const i of this.items) if (!i.done) out.push({ x: i.x, z: i.z, kind: 'item' });
     return out;
@@ -293,6 +365,6 @@ export class MissionEngine {
       const t = Math.max(0, Math.ceil(this.timer));
       extra += `${extra ? '  ·  ' : ''}⏱ ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     }
-    h.setMission(`MISSION ${this.mi + 1}/10 — ${this.mission.title}`, s.objective || '', extra, this.timer !== null && this.timer < 15);
+    h.setMission(this.cur === BONUS ? `MISSION BONUS — ${BONUS.title}` : `MISSION ${this.mi + 1}/10 — ${this.mission.title}`, s.objective || '', extra, this.timer !== null && this.timer < 15);
   }
 }

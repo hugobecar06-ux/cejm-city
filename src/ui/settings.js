@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const KEY = 'cejmcity.settings.v1';
-const DEFAULTS = { sound: true, volume: 80, sens: 100, autocam: true, quality: 'mid', btnsize: '1', minimap: true };
+const DEFAULTS = { sound: true, volume: 80, sens: 100, autocam: true, camdist: 'far', quality: 'mid', btnsize: '1', minimap: true };
 
 // Panneau Réglages (son, caméra, qualité, commandes tactiles) — sauvegardé dans localStorage
 export class Settings {
@@ -33,6 +33,7 @@ export class Settings {
       render();
     };
     seg('set-quality', 'quality');
+    seg('set-camdist', 'camdist');
     seg('set-btnsize', 'btnsize');
     this.apply();
   }

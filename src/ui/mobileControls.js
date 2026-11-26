@@ -39,6 +39,9 @@ export class MobileControls {
     };
     hold($('p-gas'), 'gas');
     hold($('p-brake'), 'brake');
+    hold($('s-left'), 'left');
+    hold($('s-right'), 'right');
+    $('m-jump').addEventListener('pointerdown', (e) => { e.preventDefault(); input.trigger('jump'); });
     this.action = $('m-action');
     this.action.addEventListener('pointerdown', (e) => { e.preventDefault(); input.trigger('interact'); });
   }
@@ -47,8 +50,11 @@ export class MobileControls {
     if (!this.enabled || this.inCar === inCar) return;
     this.inCar = inCar;
     document.body.classList.toggle('in-car', inCar);
-    this.input.joy.y = 0;
-    if (!inCar) { this.input.pedal.gas = false; this.input.pedal.brake = false; }
+    const P = this.input.pedal, J = this.input.joy;
+    J.x = 0; J.y = 0;
+    $('joy-knob').style.transform = '';
+    P.gas = P.brake = P.left = P.right = false;
+    document.querySelectorAll('.pedal, .steer-btn').forEach((el) => el.classList.remove('on'));
   }
 
   setActionLabel(t, visible = true) {

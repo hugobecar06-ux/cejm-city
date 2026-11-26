@@ -64,7 +64,7 @@ export const INTRO = [
   ['Léa', "Salut ! Bienvenue à CEJM City ! Moi, c'est Léa, fondatrice de la start-up CEJM City Corp."],
   ['Léa', "Mon rêve : bâtir un empire du numérique. Et pour ça, j'ai besoin de toi !"],
   ['Léa', "Mission après mission, je vais t'apprendre les règles de la nouvelle économie. Je te guide par téléphone."],
-  ['Léa', "Suis la flèche en haut de l'écran et rejoins le marqueur jaune. Tu peux prendre n'importe quelle voiture avec E. Le carnet de définitions s'ouvre avec J. À toi de jouer !"],
+  ['Léa', "Suis la flèche en haut de l'écran et rejoins le marqueur jaune. Tu peux prendre n'importe quelle voiture avec E, et sauter à pied (bouton SAUTER ou Espace) pour les parcours. Le carnet de définitions s'ouvre avec J. À toi de jouer !"],
 ];
 
 export const FAIL_LINES = [['Léa', "Aïe, trop tard ! Le chrono est écoulé… Pas de panique, on recommence cette étape."]];
@@ -89,7 +89,14 @@ export const MISSIONS = [
         { pos: [-132, -160], label: 'Dossier papier', msg: 'Bulletins de paie récupérés' },
         { pos: [-178, -120], label: 'Dossier papier', msg: 'Bons de commande récupérés' },
       ] },
-      { type: 'goto', target: 'datacenter', objective: 'Apporte les dossiers au Data Center' },
+      { type: 'dialog', lines: [
+        ['M. Martin', 'Catastrophe ! Le dossier le plus important, le contrat Dupuis, s\'est envolé tout en haut des échafaudages du parc !'],
+        ['Léa', 'Va le chercher à pied : grimpe de plateforme en plateforme en sautant (bouton SAUTER, ou Espace sur ordinateur).'],
+      ] },
+      { type: 'collect', course: { block: [1, 4], rot: 0, level: 1 }, objective: 'Parcours : grimpe récupérer le contrat Dupuis', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+        { pos: 'course', label: 'Contrat Dupuis', msg: 'Contrat Dupuis récupéré !' },
+      ] },
+      { type: 'goto', target: 'datacenter', objective: 'Apporte les dossiers au Data Center', hazards: [{ type: 'travaux', at: [120, 110], dir: 'z' }, { type: 'huile', at: [100, 160], dir: 'x' }] },
       { type: 'dialog', lines: [
         ['Technicien', 'Ah, les fameux dossiers de M. Martin ! On va tout numériser.'],
         ['Technicien', 'Chaque document est scanné en PDF et stocké dans le cloud : consultable 24 h/24, depuis n\'importe où.'],
@@ -112,7 +119,7 @@ export const MISSIONS = [
         ['Léa', 'Supprimons les intermédiaires ! Avec le numérique, vous pouvez vendre directement à vos clients.'],
         ['Léa', 'Mme Leroy vient de commander un panier sur le site de la ferme. Prends une voiture et livre-le-lui directement !'],
       ] },
-      { type: 'goto', target: 'leroy', car: true, objective: 'Livre le panier chez Mme Leroy (en voiture)' },
+      { type: 'goto', target: 'leroy', car: true, objective: 'Livre le panier chez Mme Leroy (en voiture)', hazards: [{ type: 'police', at: [46, 80], dir: 'x' }, { type: 'mamies', at: [74, 80], dir: 'x' }, { type: 'travaux', at: [-20, 120], dir: 'x' }] },
       { type: 'dialog', lines: [
         ['Mme Leroy', "Oh, merci ! Des légumes du jour, directement du producteur. C'est plus frais… et moins cher qu'au supermarché !"],
         ['Léa', "Ça, c'est la désintermédiation : le producteur vend directement au consommateur."],
@@ -140,10 +147,17 @@ export const MISSIONS = [
         ['Sam', '3 colis urgents à livrer à 3 adresses éloignées. Tu as 3 minutes !'],
         ['Léa', 'Chez un pure player, la livraison, c\'est la vitrine. Fonce !'],
       ] },
-      { type: 'collect', time: 180, objective: 'Livre les 3 colis ClicShop', counter: (n, t) => `Colis livrés : ${n}/${t}`, items: [
+      { type: 'collect', time: 180, objective: 'Livre les 3 colis ClicShop', hazards: [{ type: 'police', at: [-160, 28], dir: 'z' }, { type: 'huile', at: [0, 165], dir: 'z' }, { type: 'mamies', at: [-200, -166], dir: 'z' }, { type: 'travaux', at: [60, -100], dir: 'z' }], counter: (n, t) => `Colis livrés : ${n}/${t}`, items: [
         { pos: [-160, 40], label: 'Livraison : Mme Petit', msg: 'Colis livré à Mme Petit !' },
         { pos: [0, 180], label: 'Livraison : M. Nguyen', msg: 'Colis livré à M. Nguyen !' },
         { pos: [-200, -180], label: 'Livraison : Léo', msg: 'Colis livré à Léo !' },
+      ] },
+      { type: 'dialog', lines: [
+        ['Sam', 'Aïe… un drone de livraison a lâché un colis sur les plateformes du parc, près de l\'entrepôt !'],
+        ['Sam', 'Va le récupérer à pied, un client l\'attend !'],
+      ] },
+      { type: 'collect', course: { block: [8, 1], rot: 1, level: 2 }, objective: 'Parcours : récupère le colis du drone', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+        { pos: 'course', label: 'Colis du drone', msg: 'Colis du drone récupéré !' },
       ] },
       { type: 'dialog', lines: [
         ['Sam', 'Tout est livré à l\'heure, les clients nous mettent 5 étoiles !'],
@@ -166,10 +180,10 @@ export const MISSIONS = [
         ['Léa', 'Teste l\'appli : deviens chauffeur UBIK ! Ta première cliente, Inès, t\'attend.'],
       ] },
       { type: 'goto', target: [-153.75, 100], car: true, npc: N('Inès'), objective: 'Course UBIK : récupère Inès (en voiture)' },
-      { type: 'goto', target: 'hq', car: true, time: 70, objective: 'Dépose Inès au CEJM City HQ', done: 'Inès descend : ★★★★★' },
+      { type: 'goto', target: 'hq', car: true, time: 70, hazards: [{ type: 'police', at: [-34, 0], dir: 'x' }, { type: 'mamies', at: [-6, 0], dir: 'x' }, { type: 'huile', at: [-80, 60], dir: 'z' }], objective: 'Dépose Inès au CEJM City HQ', done: 'Inès descend : ★★★★★' },
       { type: 'dialog', lines: [['UBIK', '🔔 Nouvelle course disponible ! Karim t\'attend. Destination : le Café Wifi.']] },
       { type: 'goto', target: [126.25, 160], car: true, npc: N('Karim'), objective: 'Course UBIK : récupère Karim (en voiture)' },
-      { type: 'goto', target: 'cafe', car: true, time: 80, objective: 'Dépose Karim au Café Wifi', done: 'Karim descend : ★★★★★' },
+      { type: 'goto', target: 'cafe', car: true, time: 80, hazards: [{ type: 'travaux', at: [114, -80], dir: 'x' }, { type: 'huile', at: [92, -80], dir: 'x' }, { type: 'mamies', at: [120, 30], dir: 'z' }], objective: 'Dépose Karim au Café Wifi', done: 'Karim descend : ★★★★★' },
       { type: 'dialog', lines: [
         ['UBIK', 'Courses terminées ! Ta note de chauffeur : 4,8 ★. Prix calculé dans l\'appli, paiement sans contact.'],
         ['Léa', "Voilà l'uberisation : une plateforme met directement en relation, en temps réel, des clients et des particuliers ou indépendants."],
@@ -194,6 +208,12 @@ export const MISSIONS = [
         { pos: [80, -140], label: 'Vélo', msg: 'Vélo prêté par Amina' },
         { pos: [120, -90], label: 'Tondeuse', msg: 'Tondeuse prêtée par M. Garcia' },
         { pos: [20, -120], label: 'Carton de livres', msg: 'Carton de livres donné par Lucie' },
+      ] },
+      { type: 'dialog', lines: [
+        ['Nadia', 'Dernière chose : Malo veut prêter son cerf-volant… mais il est coincé tout en haut du parcours du parc !'],
+      ] },
+      { type: 'collect', course: { block: [6, 5], rot: 2, level: 3 }, objective: 'Parcours : décroche le cerf-volant de Malo', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+        { pos: 'course', label: 'Cerf-volant', msg: 'Cerf-volant prêté par Malo' },
       ] },
       { type: 'goto', target: 'partag', objective: "Rapporte tout au local Partag'Voisins" },
       { type: 'dialog', lines: [
@@ -221,6 +241,13 @@ export const MISSIONS = [
         { pos: 'prixplus', label: 'Prix+', msg: 'Prix+ : 749 €, avis 4,6/5' },
         { pos: 'cafe', label: 'Comparateur (Café Wifi)', msg: 'Comparateur : le prix le plus bas du marché est de 749 €, avec 1 200 avis clients' },
       ] },
+      { type: 'dialog', lines: [
+        ['M. Dupont', 'J\'aimerais lire les derniers avis sur les réseaux sociaux… mais ici, ça ne capte pas !'],
+        ['Léa', 'Grimpe en haut du parcours du parc : là-haut, il y a du réseau !'],
+      ] },
+      { type: 'collect', course: { block: [4, 6], rot: 3, level: 4 }, objective: 'Parcours : grimpe capter le réseau', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+        { pos: 'course', label: 'Réseau 4G', msg: 'Avis sur les réseaux sociaux : 92 % recommandent Prix+' },
+      ] },
       { type: 'goto', target: 'techstore', objective: 'Retourne à TechStore avec M. Dupont' },
       { type: 'dialog', lines: [['M. Dupont', '899 € ici, 749 € chez Prix+ avec de meilleurs avis… Le vendeur va devoir faire un effort !']] },
       { type: 'quiz', question: 'Le vendeur de TechStore veut garder ce client. Que doit-il faire ?',
@@ -247,6 +274,12 @@ export const MISSIONS = [
         { pos: [-33.75, -180], label: 'La Libraire', msg: 'La Libraire rejoint LA PLACE !' },
         { pos: [6.25, -100], label: 'La Créatrice de bijoux', msg: 'La Créatrice de bijoux rejoint LA PLACE !' },
         { pos: [-193.75, -100], label: 'Le Brocanteur', msg: 'Le Brocanteur rejoint LA PLACE !' },
+      ] },
+      { type: 'dialog', lines: [
+        ['Léa', 'Une photographe veut vendre ses tirages sur LA PLACE… elle fait des photos tout en haut du parcours du parc. Rejoins-la !'],
+      ] },
+      { type: 'collect', course: { block: [1, 4], rot: 2, level: 5 }, objective: 'Parcours : rejoins la Photographe', counter: () => 'DEATHRUN · ne tombe pas dans la lave !', items: [
+        { pos: 'course', label: 'La Photographe', msg: 'La Photographe rejoint LA PLACE !' },
       ] },
       { type: 'goto', target: 'laplace', objective: 'Retourne à La Place', onDone: (ctx) => ctx.spawnStalls() },
       { type: 'dialog', lines: [
@@ -307,7 +340,7 @@ export const MISSIONS = [
       { type: 'dialog', lines: [['Léa', "Et si tu n'as besoin d'une voiture que pour 40 minutes ? Va à la station Loc'Auto."]] },
       { type: 'goto', target: 'locauto', objective: "Va à la station Loc'Auto", onDone: (ctx) => ctx.spawnRental() },
       { type: 'dialog', lines: [["Loc'Auto", "Votre voiture verte LOC'AUTO est prête, déverrouillée par l'appli. Bonne route !"]] },
-      { type: 'goto', target: 'zenith', car: 'rental', objective: "Conduis la voiture Loc'Auto jusqu'au Zénith" },
+      { type: 'goto', target: 'zenith', car: 'rental', hazards: [{ type: 'travaux', at: [160, 44], dir: 'z' }, { type: 'huile', at: [100, 140], dir: 'x' }, { type: 'mamies', at: [40, 120], dir: 'z' }], objective: "Conduis la voiture Loc'Auto jusqu'au Zénith" },
       { type: 'goto', target: 'locauto', car: 'rental', objective: "Rends la voiture à la station Loc'Auto" },
       { type: 'dialog', lines: [
         ["Loc'Auto", '12 € pour 40 minutes d\'usage, sans assurance ni entretien à gérer.'],
@@ -337,8 +370,39 @@ export const MISSIONS = [
         help: 'Non : ici, il existe une version « premium » payante en plus de la version gratuite.',
         explain: 'Bravo ! Free + premium = freemium.' },
       { type: 'dialog', lines: [['Léa', 'Dernière étape : la billetterie du Zénith. Le concert de ce soir affiche complet… ou presque !']] },
-      { type: 'goto', target: 'zenith', objective: 'Va à la billetterie du Zénith' },
+      { type: 'goto', target: 'zenith', objective: 'Va à la billetterie du Zénith', hazards: [{ type: 'police', at: [160, 74], dir: 'z' }, { type: 'mamies', at: [140, 40], dir: 'x' }] },
       { type: 'yield', threshold: 30, objective: 'Achète ton billet quand le prix passe sous 30 €' },
     ],
   },
 ];
+
+// ---------------------------------------------------------------- MISSION BONUS
+// Disponible après la mission 1 (marqueur violet). Pas de définition à la clé : juste pour le fun !
+export const BONUS = {
+  title: 'LE CASSE DU FOIN',
+  startPos: [-80, 128],
+  steps: [
+    { type: 'dialog', onStart: (ctx) => ctx.resetTrailer(), lines: [
+      ['Léa', "Mission spéciale ! Un vendeur de LA PLACE paie une fortune pour du foin bio… et la grange de M. Dubois en déborde."],
+      ['Léa', "Le plan : une remorque, une voiture, et on « emprunte » quelques bottes pendant qu'il fait sa sieste. Discrètement !"],
+      ['Léa', 'Monte dans une voiture et recule jusqu\'à la remorque, juste ici.'],
+    ] },
+    { type: 'goto', target: [-80, 134], car: true, objective: 'Viens chercher la remorque en voiture', onDone: (ctx) => ctx.attachTrailer() },
+    { type: 'goto', target: 'ferme', car: 'trailer', objective: 'Fonce à la Ferme Dubois avec la remorque',
+      hazards: [{ type: 'mamies', at: [-120, 160], dir: 'x' }, { type: 'huile', at: [-160, 140], dir: 'z' }] },
+    { type: 'dialog', lines: [['Léa', 'Charge 4 bottes de foin sur la remorque… vite, avant qu\'il se réveille !']] },
+    { type: 'collect', bales: true, time: 75, chaser: [-180, 192], objective: 'Charge les bottes de foin sur la remorque',
+      counter: (n, t) => `Bottes chargées : ${n}/${t}`, items: [
+        { pos: [-186, 170], label: 'Botte de foin', msg: 'Botte chargée !' },
+        { pos: [-174, 169], label: 'Botte de foin', msg: 'Botte chargée !' },
+        { pos: [-184, 176], label: 'Botte de foin', msg: 'Botte chargée !' },
+        { pos: [-176, 177], label: 'Botte de foin', msg: 'Botte chargée !' },
+      ] },
+    { type: 'goto', target: 'laplace', car: 'trailer', time: 120, objective: 'Livre le foin à LA PLACE (avec la remorque !)',
+      hazards: [{ type: 'police', at: [-100, 120], dir: 'z' }, { type: 'travaux', at: [-60, -100], dir: 'z' }, { type: 'mamies', at: [-60, -40], dir: 'z' }, { type: 'huile', at: [-140, 0], dir: 'z' }] },
+    { type: 'dialog', lines: [
+      ['Vendeur', 'Du foin bio, livré en remorque ? Parfait, je prends tout !'],
+      ['Léa', 'Bon… on va quand même payer M. Dubois. Sans confiance, pas de commerce : c\'est la règle n°1 du business !'],
+    ] },
+  ],
+};

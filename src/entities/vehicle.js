@@ -78,7 +78,9 @@ export class Vehicle {
     const sp = Math.abs(fwd);
     const turn = this.steer * 2.3 * Math.min(1, sp / 5) / (1 + sp / 28) * (handbrake ? 1.6 : 1) * Math.sign(fwd || 1);
     this.heading -= turn * dt;
-    const grip = handbrake ? 1.4 : 9;
+    // flaque d'huile : presque plus d'adhérence et la voiture part en tête-à-queue
+    if (this.oil > 0) { this.oil -= dt; this.heading += this.oilSpin * dt * Math.min(1, sp / 8); }
+    const grip = this.oil > 0 ? 0.5 : handbrake ? 1.4 : 9;
     const k = Math.exp(-grip * dt);
     latX *= k; latZ *= k;
     const nfx = Math.sin(this.heading), nfz = Math.cos(this.heading);
@@ -96,7 +98,12 @@ export class Vehicle {
     }
     this.pos.x += this.vel.x * dt;
     this.pos.z += this.vel.z * dt;
-    const res = this.game.colliders.resolve(this.pos, this.radius);
+    if (this.game.parkour.boxes.length) {
+      const bx = this.pos.x, bz = this.pos.z;
+      this.game.parkour.resolve(this.pos, this.radius, 0);
+      if (bx !== this.pos.x || bz !== this.pos.z) { this.vel.x *= 0.5; this.vel.z *= 0.5; }
+    }
+    const res = this.game.colliders.resolve(this.pos, this.radius, this.ai ? 'hazard' : null);
     if (res.hit) {
       const vn = this.vel.x * res.nx + this.vel.z * res.nz;
       if (vn < 0) {

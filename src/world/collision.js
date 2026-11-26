@@ -26,6 +26,17 @@ export class Colliders {
     return b;
   }
 
+  remove(b) {
+    const c = this.cell;
+    for (let cx = Math.floor(b.minX / c); cx <= Math.floor(b.maxX / c); cx++) {
+      for (let cz = Math.floor(b.minZ / c); cz <= Math.floor(b.maxZ / c); cz++) {
+        const arr = this.grid.get(this.key(cx, cz));
+        if (arr) { const i = arr.indexOf(b); if (i >= 0) arr.splice(i, 1); }
+      }
+    }
+    const i = this.boxes.indexOf(b); if (i >= 0) this.boxes.splice(i, 1);
+  }
+
   forEachNear(x, z, r, fn) {
     this.stamp++;
     const c = this.cell;
@@ -43,10 +54,11 @@ export class Colliders {
   }
 
   // Repousse le cercle (p.x, p.z, r) hors des boîtes. Renvoie la normale cumulée.
-  resolve(p, r) {
+  resolve(p, r, skipTag = null) {
     const out = { hit: false, nx: 0, nz: 0, depth: 0 };
     for (let iter = 0; iter < 2; iter++) {
       this.forEachNear(p.x, p.z, r + 1, (b) => {
+        if (skipTag && b.tag === skipTag) return;
         const cx = Math.max(b.minX, Math.min(p.x, b.maxX));
         const cz = Math.max(b.minZ, Math.min(p.z, b.maxZ));
         let dx = p.x - cx, dz = p.z - cz;

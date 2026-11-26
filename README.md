@@ -61,3 +61,7 @@ Le jeu est en ligne quelques minutes plus tard à l'adresse `https://<pseudo>.gi
 ## Technique
 
 Vite + Three.js, aucun backend, aucun fichier 3D externe (modèles low-poly générés en code), sons générés avec WebAudio, progression sauvegardée dans `localStorage`.
+
+## Sons
+
+Le bruit de moteur de la voiture utilise `public/sounds/f1.mp3` (fichier fourni par l'auteur du jeu : « F1 racing car sound »). Les autres sons sont générés en WebAudio.

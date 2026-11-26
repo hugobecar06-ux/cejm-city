@@ -19,12 +19,56 @@ export class Sfx {
       o1.connect(this.filter); o2.connect(this.filter); this.filter.connect(this.engineGain); this.engineGain.connect(this.master);
       o1.start(); o2.start();
       this.o1 = o1; this.o2 = o2;
+      this.loadF1();
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
-  engine(on, ratio) {
+
+  // Son de Formule 1 (public/sounds/f1.mp3) : on cherche la partie la plus régulière du moteur
+  // et on la joue en boucle ; sa hauteur suit la vitesse, son volume suit l'accélération.
+  async loadF1() {
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}sounds/f1.mp3`);
+      const buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
+      const data = buf.getChannelData(0), sr = buf.sampleRate;
+      const win = Math.floor(sr * 0.1), n = Math.floor(data.length / win);
+      const rms = new Float32Array(n);
+      for (let k = 0; k < n; k++) { let s = 0; for (let j = k * win; j < (k + 1) * win; j += 4) s += data[j] * data[j]; rms[k] = Math.sqrt(s / (win / 4)); }
+      const span = Math.min(n - 1, 20); // fenêtre de 2 s
+      let best = 0, bestScore = -1;
+      for (let k = 0; k + span < n; k++) {
+        let m = 0; for (let j = k; j < k + span; j++) m += rms[j]; m /= span;
+        let v = 0; for (let j = k; j < k + span; j++) v += (rms[j] - m) ** 2; v = Math.sqrt(v / span);
+        const score = m - v * 2.5; // fort et régulier
+        if (score > bestScore) { bestScore = score; best = k; }
+      }
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      src.loopStart = (best * win) / sr; src.loopEnd = ((best + span) * win) / sr;
+      const peak = Math.max(...rms.slice(best, best + span)) || 0.3;
+      this.f1Gain = this.ctx.createGain(); this.f1Gain.gain.value = 0;
+      this.f1Norm = Math.min(3, 0.35 / peak);
+      src.connect(this.f1Gain); this.f1Gain.connect(this.master);
+      src.start(0, src.loopStart);
+      this.f1 = src;
+    } catch (e) {
+      console.warn('Son F1 indisponible, moteur synthétique utilisé', e);
+    }
+  }
+
+  // on : dans une voiture ; ratio : vitesse 0..1 ; throttle : accélérateur 0..1
+  engine(on, ratio, throttle = 0) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
+    if (this.f1) {
+      this.engineGain.gain.setTargetAtTime(0, t, 0.1);
+      // à l'arrêt : ralenti grave ; en accélérant : le régime monte
+      const rate = 0.55 + ratio * 0.85 + throttle * 0.18;
+      this.f1.playbackRate.setTargetAtTime(rate, t, throttle > 0 ? 0.12 : 0.3);
+      const vol = on ? (0.22 + ratio * 0.38 + throttle * 0.4) * this.f1Norm : 0;
+      this.f1Gain.gain.setTargetAtTime(vol, t, on ? 0.08 : 0.25);
+      return;
+    }
     const f = 45 + ratio * 130;
     this.o1.frequency.setTargetAtTime(f, t, 0.05);
     this.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);

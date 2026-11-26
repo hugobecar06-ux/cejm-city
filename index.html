@@ -20,6 +20,7 @@
 </head>
 <body>
   <canvas id="game"></canvas>
+  <div class="tbar top"></div><div class="tbar bottom"></div>
   <div id="loading">Chargement de CEJM City…</div>
 
   <div id="title" class="overlay hidden">
@@ -79,6 +80,11 @@
 
     <div id="mobile">
       <div id="joy"><div id="joy-knob"></div></div>
+      <div id="steer">
+        <div id="s-left" class="steer-btn" aria-label="Tourner à gauche">◀</div>
+        <div id="s-right" class="steer-btn" aria-label="Tourner à droite">▶</div>
+      </div>
+      <button id="m-jump" class="m-btn">SAUTER</button>
       <button id="m-action" class="m-btn big">ACTION</button>
       <div id="pedals">
         <div id="p-brake" class="pedal brake" aria-label="Frein / marche arrière"><span>FREIN<br />RECUL</span></div>
@@ -125,6 +131,8 @@
       <div class="set-row"><label for="set-sound">Son</label><button id="set-sound" class="toggle">Activé</button></div>
       <div class="set-row"><label for="set-volume">Volume</label><input id="set-volume" type="range" min="0" max="100" step="5" /></div>
       <div class="set-row"><label for="set-sens">Sensibilité de la caméra</label><input id="set-sens" type="range" min="30" max="200" step="10" /></div>
+      <div class="set-row"><label for="set-camdist">Distance de la caméra</label>
+        <div class="seg" id="set-camdist"><button data-v="near">Proche</button><button data-v="far">Loin</button><button data-v="vfar">Très loin</button></div></div>
       <div class="set-row"><label for="set-autocam">Caméra qui suit automatiquement</label><button id="set-autocam" class="toggle">Activée</button></div>
       <div class="set-row"><label for="set-quality">Qualité graphique</label>
         <div class="seg" id="set-quality"><button data-v="low">Basse</button><button data-v="mid">Moyenne</button><button data-v="high">Haute</button></div></div>
@@ -134,6 +142,17 @@
       <p class="set-note">Les réglages sont gardés sur cet appareil.</p>
       <button id="set-close" class="btn primary">Fermer</button>
     </div>
+  </div>
+
+  <div id="cine" class="hidden">
+    <div class="cine-bar top"></div>
+    <div class="cine-bar bottom"></div>
+    <div id="cine-flash"></div>
+    <div id="cine-text">
+      <div id="cine-sub"></div>
+      <div id="cine-title">CEJM <span>CITY</span></div>
+    </div>
+    <button id="cine-skip">Passer ▸</button>
   </div>
 
   <div id="endscreen" class="overlay hidden">

@@ -15,6 +15,11 @@ import { Minimap } from './ui/minimap.js';
 import { Notebook, Screens } from './ui/notebook.js';
 import { MobileControls } from './ui/mobileControls.js';
 import { Settings } from './ui/settings.js';
+import { Parkour } from './world/parkour.js';
+import { Cinematic } from './ui/cinematic.js';
+import { Hazards } from './world/hazards.js';
+import { TalkScene } from './ui/talkscene.js';
+import { Trailer } from './entities/trailer.js';
 import { MissionEngine } from './missions/engine.js';
 import { INTRO } from './missions/missions.js';
 
@@ -24,7 +29,7 @@ const writeSave = (d) => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(d
 const DEBUG = /[?&]debug/.test(location.search);
 
 async function init() {
-  try { await Promise.race([Promise.all([document.fonts.load('100px "Anton"'), document.fonts.load('800 60px "Inter"')]), new Promise((r) => setTimeout(r, 2500))]); } catch { /* polices de secours */ }
+  try { await Promise.race([Promise.all([document.fonts.load('100px "Anton"'), document.fonts.load('800 60px "Inter"')]), new Promise((r) => setTimeout(r, 1000))]); } catch { /* polices de secours */ }
 
   const mobile = window.matchMedia('(pointer: coarse)').matches;
   const canvas = document.getElementById('game');
@@ -70,6 +75,7 @@ async function init() {
   const colliders = new Colliders();
   const game = { scene, camera, renderer, colliders, shadows, vehicles: [], mobile };
   game.city = buildCity(scene, colliders, { shadows });
+  game.parkour = new Parkour(scene);
   game.sfx = new Sfx();
   game.input = new Input(canvas);
   const hq = game.city.landmarks.hq.door;
@@ -92,6 +98,10 @@ async function init() {
   game.minimap = new Minimap(document.getElementById('minimap'), game.city);
   game.mobileControls = new MobileControls(game.input);
   game.settings = new Settings(game);
+  game.cinematic = new Cinematic(game);
+  game.hazards = new Hazards(game);
+  game.talk = new TalkScene(game);
+  game.trailer = new Trailer(game, -80, 134, 0);
   game.missions = new MissionEngine(game);
   game.save = loadSave() || { completed: 0, introSeen: false };
   game.saveProgress = () => { game.save.completed = game.missions.completed; writeSave(game.save); };
@@ -143,9 +153,10 @@ async function init() {
       if (v && Math.abs(v.speed) > 2) cam.yaw += angleDiff(v.heading, cam.yaw) * Math.min(1, dt * 2.5);
       else if (!v && p.moveSpeed > 0.5) cam.yaw += angleDiff(p.heading, cam.yaw) * Math.min(1, dt * 1.2);
     }
-    const wantDist = v ? 11 + Math.abs(v.speed) * 0.08 : 6.5;
+    const zoom = { near: 0.72, far: 1, vfar: 1.5 }[game.settings.v.camdist] || 1;
+    const wantDist = (v ? 11 + Math.abs(v.speed) * 0.08 : 6.5) * zoom;
     cam.dist = damp(cam.dist, wantDist, 3, dt);
-    const tx = p.x, tz = p.z, ty = v ? 1.6 : 1.5;
+    const tx = p.x, tz = p.z, ty = v ? 1.6 : 1.5 + p.y;
     let d = cam.dist;
     const cx = (k) => tx - Math.sin(cam.yaw) * Math.cos(cam.pitch) * k;
     const cz = (k) => tz - Math.cos(cam.yaw) * Math.cos(cam.pitch) * k;
@@ -185,6 +196,16 @@ async function init() {
     const dt = Math.min(0.05, clock.getDelta());
     frame++;
     const inp = game.input;
+    if (game.cinematic.active) {
+      game.sfx.engine(false, 0, 0);
+      game.cinematic.update(dt);
+      game.traffic.update(dt);
+      for (const v of game.vehicles) { if (v.ai) { v.physics(dt); v.sync(); } }
+      game.city.update(dt, mobile);
+      renderer.render(scene, camera);
+      inp.endFrame();
+      return;
+    }
     if (mode === 'title') {
       titleT += dt * 0.08;
       camera.position.set(hq.x + Math.cos(titleT) * 140, 70, hq.z + Math.sin(titleT) * 140);
@@ -222,19 +243,26 @@ async function init() {
       if (p.vehicle) {
         const a = inp.carAxis();
         p.vehicle.drive(dt, a.x, a.y, inp.holding('handbrake'));
-      } else p.updateOnFoot(dt, inp, cam.yaw);
+      } else {
+        game.parkour.update(dt, p, (falls) => { game.sfx.fail(); game.hud.toast(falls > 2 ? `Dans la lave ! Retour au départ (essai ${falls + 1}) — astuce : sprinte pour les grands sauts` : 'Dans la lave ! Retour au départ', 3); });
+        p.updateOnFoot(dt, inp, cam.yaw);
+      }
       game.traffic.update(dt);
       for (const v of game.vehicles) v.physics(dt);
       carCarCollisions(game.vehicles);
       for (const v of game.vehicles) v.sync();
+      game.trailer.update();
       game.peds.update(dt);
+      game.hazards.update(dt);
       game.missions.update(dt);
     }
+    game.cinematic.updateParticles(dt);
     game.city.update(dt, mobile);
 
     // HUD
     const v = p.vehicle;
-    game.sfx.engine(!!v && !paused, v ? Math.min(1, Math.abs(v.speed) / 38) : 0);
+    const thr = v && !paused ? Math.max(0, Math.abs(inp.carAxis().y)) : 0;
+    game.sfx.engine(!!v && !paused, v ? Math.min(1, Math.abs(v.speed) / 38) : 0, thr);
     game.hud.setSpeed(v ? Math.round(Math.abs(v.speed) * 3.6) : null);
     let hint = '', label = 'ACTION';
     game.mobileControls.setMode(!!v);
@@ -255,7 +283,8 @@ async function init() {
     } else game.hud.setArrow(null);
     if (frame % 2 === 0 && game.settings.v.minimap) game.minimap.draw(p.x, p.z, cam.yaw, v ? v.heading : p.heading, game.missions.allPoints(), tgt, v ? 1.7 : 1.1);
 
-    updateCamera(dt);
+    if (game.talk.active && game.dialog.isOpen) { game.talk.update(dt); cam.pos.copy(camera.position); }
+    else { if (game.talk.active) game.talk.end(); updateCamera(dt); }
     if (shadows) {
       sun.target.position.set(p.x, 0, p.z);
       sun.position.set(p.x + sunDir.x * 200, sunDir.y * 200 + 40, p.z + sunDir.z * 200);

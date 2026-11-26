@@ -1,7 +1,7 @@
 import { HALF, SPACING, blockCenter, N_BLOCKS, SEA_X } from '../world/constants.js';
 
 const MINX = -260, MAXX = 320, MINZ = -260, MAXZ = 260, PPM = 2; // pixels par mètre (carte de base)
-const COL = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a' };
+const COL = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff' };
 
 // Mini-carte ronde qui tourne avec la caméra
 export class Minimap {
