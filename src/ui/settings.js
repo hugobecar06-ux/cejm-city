@@ -49,6 +49,7 @@ export class Settings {
     const pr = { low: 0.75, mid: 1, high: 1.5 }[v.quality] || 1;
     g.renderer.setPixelRatio(Math.min(dpr, pr));
     g.renderer.setSize(window.innerWidth, window.innerHeight);
+    g.bloomOn = v.quality === 'high' && !g.mobile;
     document.documentElement.style.setProperty('--ctl-scale', v.btnsize);
     document.body.classList.toggle('no-minimap', !v.minimap);
     try { localStorage.setItem(KEY, JSON.stringify(v)); } catch { /* stockage indisponible */ }

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { textTexture } from './textures.js';
 import { createCharacter, randomLook } from '../entities/character.js';
 
-const COLORS = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff', waypoint: '#ff3d8b' };
+const COLORS = { start: '#ffd400', goal: '#2f9bff', item: '#36e27a', bonus: '#b04dff', waypoint: '#ff3d8b', ring: '#ffb000' };
 const beamGeo = new THREE.CylinderGeometry(1.6, 1.6, 40, 16, 1, true);
 beamGeo.translate(0, 20, 0);
 const ringGeo = new THREE.RingGeometry(2.2, 3, 32);
@@ -26,6 +26,13 @@ export function createMarker(scene, kind, x, z, label) {
     sprite.renderOrder = 10;
     group.add(sprite);
   }
+  if (kind === 'ring') { // anneau de course à traverser
+    beam.visible = false; ring.visible = false;
+    const torus = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.35, 10, 40), new THREE.MeshBasicMaterial({ color: '#ffb000', toneMapped: false }));
+    torus.position.y = 4.4;
+    group.add(torus);
+    group.userData.torus = torus;
+  }
   group.position.set(x, 0, z);
   scene.add(group);
   let t = Math.random() * 5;
@@ -35,6 +42,7 @@ export function createMarker(scene, kind, x, z, label) {
       t += dt;
       beam.material.opacity = 0.28 + Math.sin(t * 3) * 0.08;
       ring.scale.setScalar(1 + Math.sin(t * 4) * 0.08);
+      if (group.userData.torus) { group.userData.torus.rotation.y += dt * 1.5; group.userData.torus.scale.setScalar(1 + Math.sin(t * 5) * 0.05); }
     },
     remove() {
       scene.remove(group);

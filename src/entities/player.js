@@ -41,7 +41,10 @@ export class Player {
     // Saut et gravité (plateformes de parcours)
     const floor = Math.max(groundY(this.pos.x, this.pos.z), this.game.parkour.resolve(this.pos, this.radius, this.y));
     const grounded = this.y <= floor + 0.05 && this.vy <= 0;
-    if (grounded && input.action('jump')) { this.vy = 8.2; this.game.sfx.tone(520, 0.12, 'triangle', 0.12); }
+    // saut tolérant : marche si on appuie un peu trop tôt ou juste après avoir quitté le bord
+    this.coyote = grounded ? 0.15 : (this.coyote || 0) - dt;
+    this.jumpBuf = input.action('jump') ? 0.18 : (this.jumpBuf || 0) - dt;
+    if (this.jumpBuf > 0 && this.coyote > 0 && this.vy <= 0.01) { this.vy = 8.4; this.coyote = 0; this.jumpBuf = 0; this.game.sfx.tone(520, 0.12, 'triangle', 0.12); }
     this.vy -= 24 * dt;
     this.y += this.vy * dt;
     if (this.y <= floor) { this.y = floor; this.vy = 0; }

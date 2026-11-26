@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { HALF, SPACING, N_BLOCKS, blockCenter, mulberry32, SEA_X } from './constants.js';
-import { makeFacadeTextures } from './textures.js';
+import { makeFacadeTextures, asphaltTexture, sidewalkTexture, grassTexture, textTexture } from './textures.js';
 import { partsGeometry, buildingGeometry } from './geometry.js';
 import { LANDMARKS, buildLandmark, stallParts } from './landmarks.js';
 
@@ -14,9 +14,9 @@ export function buildCity(scene, colliders, { shadows }) {
   const city = { landmarks: {}, parks: [], parked: sinks.parked, blocks: [] };
 
   // --- Sol ---
-  const grass = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshLambertMaterial({ color: '#5d7a3a' }));
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshLambertMaterial({ map: grassTexture(rng, 400), color: '#c9d6b0' }));
   grass.rotation.x = -Math.PI / 2; grass.position.y = -0.03; scene.add(grass);
-  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(410, 410), new THREE.MeshLambertMaterial({ color: '#3a3842' }));
+  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(410, 410), new THREE.MeshLambertMaterial({ map: asphaltTexture(rng, 52) }));
   asphalt.rotation.x = -Math.PI / 2; asphalt.receiveShadow = true; scene.add(asphalt);
   const sand = new THREE.Mesh(new THREE.PlaneGeometry(38, 520), new THREE.MeshLambertMaterial({ color: '#f2d19b' }));
   sand.rotation.x = -Math.PI / 2; sand.position.set(224, 0.02, 0); sand.receiveShadow = true; scene.add(sand);
@@ -28,12 +28,12 @@ export function buildCity(scene, colliders, { shadows }) {
 
   // --- Pâtés : trottoirs, parcs, bâtiments ---
   const sidewalkGeo = new THREE.BoxGeometry(30, 0.12, 30);
-  const sidewalks = new THREE.InstancedMesh(sidewalkGeo, new THREE.MeshLambertMaterial({ color: '#b5aaa2' }), N_BLOCKS * N_BLOCKS);
+  const sidewalks = new THREE.InstancedMesh(sidewalkGeo, new THREE.MeshLambertMaterial({ map: sidewalkTexture(rng) }), N_BLOCKS * N_BLOCKS);
   sidewalks.receiveShadow = true;
   const m4 = new THREE.Matrix4();
   const lmByBlock = {};
   for (const lm of LANDMARKS) lmByBlock[`${lm.i},${lm.j}`] = lm;
-  const palmSpots = [], lampSpots = [], treeSpots = [];
+  const palmSpots = [], lampSpots = [], treeSpots = [], parkLawns = [], furniture = [];
   let k = 0;
   for (let i = 0; i < N_BLOCKS; i++) {
     for (let j = 0; j < N_BLOCKS; j++) {
@@ -42,6 +42,9 @@ export function buildCity(scene, colliders, { shadows }) {
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) palmSpots.push([cx + sx * 14.3, cz + sz * 14.3]);
       for (const sx of [-1, 1]) { lampSpots.push([cx + sx * 7.5, cz + 14.3]); lampSpots.push([cx - sx * 7.5, cz - 14.3]); }
       const key = `${i},${j}`;
+      // arbres d'alignement et mobilier urbain sur les côtés est / ouest
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) if (rng() < 0.6) treeSpots.push([cx + sx * 14.2, cz + sz * 7.5]);
+      furniture.push([cx, cz]);
       if (lmByBlock[key]) {
         const lm = buildLandmark(lmByBlock[key], sinks);
         city.landmarks[lm.id] = lm;
@@ -49,7 +52,8 @@ export function buildCity(scene, colliders, { shadows }) {
       }
       if (PARKS.has(key)) {
         city.parks.push({ x: cx, z: cz });
-        sinks.plain.push({ t: 'box', w: 25, h: 0.1, d: 25, pos: [cx, 0.14, cz], color: '#4f8f3a' });
+        parkLawns.push([cx, cz]);
+        for (let f = 0; f < 4; f++) { const a = f * Math.PI / 2 + 0.6; sinks.plain.push({ t: 'cyl', r: 1.4, h: 0.35, seg: 10, pos: [cx + Math.cos(a) * 5, 0.3, cz + Math.sin(a) * 5], color: ['#ff6fa8', '#ffd84d', '#c58cff', '#ff8a4d'][f] }); }
         sinks.plain.push({ t: 'cyl', r: 3, h: 0.6, seg: 16, pos: [cx, 0.4, cz], color: '#bfae8e' });
         sinks.plain.push({ t: 'cyl', r: 2.6, h: 0.1, seg: 16, pos: [cx, 0.72, cz], color: '#3fb6d9' });
         colliders.add(cx - 3, cz - 3, cx + 3, cz + 3, 1);
@@ -100,7 +104,7 @@ export function buildCity(scene, colliders, { shadows }) {
       for (let t = s + 8; t < s + SPACING - 6; t += 6) { dashes.push([r, t + 1.5, 0]); dashes.push([t + 1.5, r, 1]); }
     }
   }
-  const dashMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.25, 3), new THREE.MeshBasicMaterial({ color: '#f5f0e0' }), dashes.length);
+  const dashMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.25, 3), new THREE.MeshLambertMaterial({ color: '#d8d2c2' }), dashes.length);
   const q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pv = new THREE.Vector3();
   dashes.forEach(([x, z, rot], n) => {
     e.set(-Math.PI / 2, 0, rot ? Math.PI / 2 : 0); q.setFromEuler(e); pv.set(x, 0.02, z);
@@ -167,6 +171,79 @@ export function buildCity(scene, colliders, { shadows }) {
     sinks.plain.push({ t: 'cone', r: 40 + rng() * 50, h: 25 + rng() * 45, seg: 6, pos: [Math.cos(a) * r, 10, Math.sin(a) * r * 1.2], color: rng() < 0.5 ? '#4b5d3a' : '#5c6a44' });
   }
 
+  // Pelouses texturées des parcs
+  const lawns = new THREE.InstancedMesh(new THREE.BoxGeometry(25, 0.1, 25), new THREE.MeshLambertMaterial({ map: grassTexture(rng, 5) }), Math.max(1, parkLawns.length));
+  parkLawns.forEach(([x, z], n) => { m4.makeTranslation(x, 0.14, z); lawns.setMatrixAt(n, m4); });
+  lawns.receiveShadow = true; scene.add(lawns);
+
+  // Mobilier urbain : bancs, poubelles, bouches d'incendie, abribus (sur les trottoirs nord / sud)
+  for (const [cx, cz] of furniture) {
+    const sz = rng() < 0.5 ? 1 : -1, z = cz + sz * 13.9, yaw = sz > 0 ? 0 : Math.PI;
+    const pick = rng();
+    if (pick < 0.35) { // banc
+      const x = cx + (rng() < 0.5 ? -3.5 : 3.5);
+      sinks.plain.push({ t: 'box', w: 2, h: 0.12, d: 0.6, pos: [x, 0.62, z], yaw, color: '#8d5a3b' });
+      sinks.plain.push({ t: 'box', w: 2, h: 0.5, d: 0.1, pos: [x, 0.95, z + sz * 0.28], yaw, color: '#8d5a3b' });
+      for (const dx of [-0.85, 0.85]) sinks.plain.push({ t: 'box', w: 0.1, h: 0.5, d: 0.5, pos: [x + dx, 0.35, z], color: '#333' });
+      colliders.add(x - 1, z - 0.35, x + 1, z + 0.35, 1, 'prop');
+    } else if (pick < 0.55) { // abribus
+      const x = cx + 2;
+      sinks.plain.push({ t: 'box', w: 4, h: 0.15, d: 1.6, pos: [x, 2.6, z], color: '#2a2440' });
+      sinks.plain.push({ t: 'box', w: 4, h: 2.4, d: 0.08, pos: [x, 1.4, z + sz * 0.75], color: '#9fd3e6' });
+      for (const dx of [-1.9, 1.9]) sinks.plain.push({ t: 'box', w: 0.1, h: 2.5, d: 0.1, pos: [x + dx, 1.3, z + sz * 0.7], color: '#ccc' });
+      sinks.neon.push({ t: 'box', w: 1.2, h: 1.6, d: 0.05, pos: [x - 1.2, 1.5, z + sz * 0.7], color: ['#ff3d8b', '#28e0d8', '#ffb000'][Math.floor(rng() * 3)] });
+      colliders.add(x - 2, z - 0.8, x + 2, z + 0.8, 3, 'prop');
+    }
+    if (rng() < 0.5) { // poubelle
+      const x = cx + (rng() - 0.5) * 18;
+      sinks.plain.push({ t: 'cyl', r: 0.3, h: 0.9, seg: 8, pos: [x, 0.55, cz - sz * 13.9], color: '#2e7d32' });
+      colliders.add(x - 0.3, cz - sz * 13.9 - 0.3, x + 0.3, cz - sz * 13.9 + 0.3, 1, 'prop');
+    }
+    if (rng() < 0.35) { // bouche d'incendie
+      const x = cx + 14, zz = cz + (rng() - 0.5) * 6;
+      sinks.plain.push({ t: 'cyl', r: 0.18, h: 0.7, seg: 8, pos: [x, 0.47, zz], color: '#e53935' });
+      sinks.plain.push({ t: 'cyl', r: 0.24, h: 0.1, seg: 8, pos: [x, 0.85, zz], color: '#e53935' });
+    }
+  }
+
+  // Panneaux publicitaires néon sur les toits (marques du jeu)
+  const ADS = [
+    ['UBIK · ta course en 2 clics', '#28e0d8'], ['CLICSHOP · livré en 24 h', '#ff6f00'], ['LIEN · rejoins le réseau', '#ff3d8b'],
+    ['MUSICITY · essai Premium', '#b04dff'], ['LA PLACE · 10 000 vendeurs', '#ffb000'], ['HUBLOCAL · du champ à l\'assiette', '#36e27a'],
+    ['CITYRUN · gratuit !', '#ff2bd6'], ['PRIX+ · le moins cher', '#fb8c00'],
+  ];
+  const tall = sinks.facade.filter((b) => b.h > 24 && b.x1 - b.x0 > 9 && b.z1 - b.z0 > 9);
+  for (let n = 0; n < Math.min(16, tall.length); n++) {
+    const b = tall[Math.floor(rng() * tall.length)];
+    const [text, col] = ADS[n % ADS.length];
+    const { texture, aspect } = textTexture(text, { color: '#ffffff', glow: col, bg: 'rgba(15,8,30,0.92)', size: 90 });
+    const w = Math.min(b.x1 - b.x0, 14) - 1, h = w / aspect;
+    const yaw = [0, Math.PI / 2, Math.PI, -Math.PI / 2][Math.floor(rng() * 4)];
+    const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, side: THREE.DoubleSide }));
+    panel.position.set(cx, b.h + 1.2 + h / 2, cz); panel.rotation.y = yaw;
+    scene.add(panel);
+    for (const s of [-1, 1]) sinks.plain.push({ t: 'box', w: 0.3, h: 1.4 + h, d: 0.3, pos: [cx + Math.cos(yaw) * s * w * 0.4, b.h + (1.4 + h) / 2, cz - Math.sin(yaw) * s * w * 0.4], color: '#444' });
+  }
+
+  // Bateaux sur la mer
+  const boats = [];
+  for (let n = 0; n < 5; n++) {
+    const sail = n % 2 === 0;
+    const parts = [
+      { t: 'box', w: 2.6, h: 1, d: 8, pos: [0, 0.4, 0], color: '#ffffff' },
+      { t: 'box', w: 2.2, h: 0.4, d: 7, pos: [0, 0.95, 0], color: '#1e88e5' },
+      sail ? { t: 'cyl', r: 0.08, h: 8, pos: [0, 5, 0.5], color: '#ddd' } : { t: 'box', w: 1.8, h: 1.2, d: 3, pos: [0, 1.7, -0.8], color: '#f5f5f5' },
+    ];
+    if (sail) parts.push({ t: 'cone', r: 2.4, h: 7, seg: 3, pos: [0, 5, 1.6], scale: [0.15, 1, 1], color: ['#ff3d8b', '#ffffff', '#28e0d8'][n % 3] });
+    const boat = new THREE.Mesh(partsGeometry(parts), vcMat);
+    boat.position.set(275 + rng() * 140, 0, -170 + n * 85 + rng() * 30);
+    boat.rotation.y = rng() * 6;
+    scene.add(boat);
+    boats.push({ m: boat, ph: rng() * 6, sp: 1 + rng() * 2 });
+  }
+  city.boats = boats;
+
   // Géométries fusionnées des landmarks / props / néons
   const plain = new THREE.Mesh(partsGeometry(sinks.plain), vcMat);
   plain.castShadow = shadows; plain.receiveShadow = shadows; scene.add(plain);
@@ -191,6 +268,11 @@ export function buildCity(scene, colliders, { shadows }) {
       p[n + 1] = Math.sin(x * 0.05 + tAcc * 1.2) * 0.35 + Math.cos(z * 0.07 + tAcc * 0.9) * 0.3;
     }
     seaGeo.attributes.position.needsUpdate = true;
+    for (const b of boats) { // les bateaux tanguent et dérivent lentement
+      b.m.position.y = Math.sin(tAcc * b.sp + b.ph) * 0.25;
+      b.m.rotation.z = Math.sin(tAcc * b.sp * 0.8 + b.ph) * 0.06;
+      b.m.rotation.y += 0.0008 * b.sp;
+    }
   };
   return city;
 }

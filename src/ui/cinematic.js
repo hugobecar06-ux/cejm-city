@@ -39,13 +39,13 @@ export class Cinematic {
     const t = this.t, a = this.a0 + t * 0.7, r = 9 + t * 2.2;
     g.camera.position.set(c.x + Math.sin(a) * r, c.y + 2 + t * 1.6, c.z + Math.cos(a) * r);
     g.camera.lookAt(c.x, c.y + 0.8, c.z);
-    if (t > this.nextFire && t < 3.6) {
+    if (t > this.nextFire && t < 2.6) {
       this.firework(c.x + (Math.random() - 0.5) * 36, 22 + Math.random() * 16, c.z + (Math.random() - 0.5) * 36);
       this.nextFire = t + 0.38;
     }
     if (t > 0.3 && !this.boomed) { this.boomed = true; this.sparks(c.x, c.y + 1, c.z, 160, ['#ffd400', '#ff3d8b', '#28e0d8'], 14, 1.4, 10); }
     this.updateParticles(dt);
-    if (t > 4.4) this.finish();
+    if (t > 3.2) this.finish();
   }
 
   play(onDone) {

@@ -72,7 +72,23 @@ export class MissionEngine {
     this.runStep();
   }
 
+  // Si le joueur est à pied et qu'aucune voiture libre n'est proche, Léa lui en fait livrer une
+  ensureCar() {
+    const g = this.game, p = g.player;
+    if (p.vehicle) return;
+    const near = g.vehicles.some((v) => !v.ai && !v.rental && Math.hypot(v.pos.x - p.x, v.pos.z - p.z) < 30);
+    if (near) return;
+    // place libre sur la chaussée la plus proche (les rues sont tous les 40 m)
+    const rx = Math.round(p.x / 40) * 40, rz = Math.round(p.z / 40) * 40;
+    const onX = Math.abs(p.x - rx) < Math.abs(p.z - rz);
+    const x = onX ? rx + 4.3 : p.x + 5, z = onX ? p.z + 5 : rz + 4.3;
+    const v = new Vehicle(g, { x, z, heading: onX ? 0 : Math.PI / 2, color: '#ff3d8b' });
+    g.vehicles.push(v);
+    setTimeout(() => g.hud.toast('🚗 Léa t\'a fait livrer une voiture juste à côté !', 3), 1500);
+  }
+
   startMission() {
+    this.ensureCar();
     this.active = true;
     this.mi = this.completed;
     this.cur = MISSIONS[this.mi];
@@ -118,7 +134,7 @@ export class MissionEngine {
       const course = s.course ? g.parkour.spawn(s.course) : null;
       for (const it of s.items) {
         const p = it.pos === 'course' ? { ...course.top } : this.resolvePos(it.pos);
-        const item = { ...p, it, done: false, marker: createMarker(g.scene, 'item', p.x, p.z, it.label) };
+        const item = { ...p, it, done: false, marker: createMarker(g.scene, s.rings ? 'ring' : 'item', p.x, p.z, it.label) };
         if (p.y) item.marker.group.position.y = p.y;
         if (s.npc) item.npc = createNPC(g.scene, p.x, p.z);
         this.items.push(item);
@@ -239,7 +255,8 @@ export class MissionEngine {
     const g = this.game;
     const px = g.player.x, pz = g.player.z;
     this.markers.forEach((m) => m.update(dt));
-    this.items.forEach((i) => { if (!i.done) i.marker.update(dt); });
+    const nextRing = this.step?.ordered ? this.items.find((x) => !x.done) : null;
+    this.items.forEach((i) => { if (!i.done) { i.marker.update(dt); if (this.step?.ordered) i.marker.group.visible = i === nextRing; } });
     if (this.startMarker) {
       this.startMarker.update(dt);
       if (Math.hypot(px - this.startMarker.x, pz - this.startMarker.z) < 4.5) this.startMission();
@@ -287,6 +304,8 @@ export class MissionEngine {
       }
       for (const i of this.items) {
         if (i.done || Math.hypot(px - i.x, pz - i.z) > r) continue;
+        if (s.ordered && i !== this.items.find((x) => !x.done)) continue; // anneaux : dans l'ordre
+        if (s.car && !(s.car === 'rental' ? g.player.vehicle?.rental : inCar)) { g.hud.setHintOverride(s.car === 'rental' ? "Passe les anneaux avec la voiture LOC'AUTO !" : 'Passe les anneaux en voiture !'); continue; }
         if (i.y && (inCar || g.player.y < i.y - 0.6)) continue; // objet en hauteur : à atteindre à pied, en sautant
         i.done = true;
         this.collected++;
@@ -331,6 +350,7 @@ export class MissionEngine {
     if (!this.active) return this.startMarker ? { x: this.startMarker.x, z: this.startMarker.z, kind: 'start' } : null;
     if (this.goal) return { ...this.goal, kind: 'goal' };
     let best = null, bd = 1e9;
+    if (this.step?.ordered) { const n = this.items.find((x) => !x.done); if (n) return { x: n.x, z: n.z, kind: 'item' }; }
     for (const i of this.items) {
       if (i.done) continue;
       const d = Math.hypot(px - i.x, pz - i.z);

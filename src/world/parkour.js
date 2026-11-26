@@ -27,15 +27,17 @@ export class Parkour {
     const c = [[1, 0], [0, 1], [-1, 0], [0, -1]][rot];
     const R = (lx, lz) => [cx + lx * c[0] - lz * c[1], cz + lx * c[1] + lz * c[0]];
     const ax = (dx, dz) => [dx * c[0] - dz * c[1], dx * c[1] + dz * c[0]]; // direction tournée
-    const half = Math.max(0.62, 1.15 - level * 0.1);
-    const gap = 3.0 + level * 0.18;
+    const half = 1.45 - level * 0.05; // grandes plateformes
+    const gap = 3.3 + level * 0.1; // espace entre bords : 0,5 à 1 m seulement
     // Tracé en « L » le long de deux bords du parc, qui monte progressivement
     const pts = [];
     let lx = -11.5, lz = 11.2, top = 0.7;
     const n1 = Math.floor(22.7 / gap) + 1;
-    for (let k = 0; k < n1; k++) { pts.push([lx, lz, top]); lx += gap; if (k % 3 !== 1) top += 0.7; }
+    for (let k = 0; k < n1; k++) { pts.push([lx, lz, top]); lx += gap; if (k % 3 !== 1) top += 0.55; }
     lx = 11.2; lz = 11.2 - gap;
-    while (lz > -11.5) { pts.push([lx, lz, top]); lz -= gap; top += 0.7; }
+    while (lz > -11.5) { pts.push([lx, lz, top]); lz -= gap; top += 0.55; }
+    // parcours plus court aux premiers niveaux : 5 plateformes au niveau 1 … 9 au niveau 5
+    pts.length = Math.min(pts.length, 4 + Math.ceil(level / 2));
     this.group = new THREE.Group();
     // Lave sous le parcours (niveau ≥ 2) : la toucher = retour au départ
     if (level >= 2) {
@@ -59,14 +61,9 @@ export class Parkour {
       this.group.add(mesh);
       const p = { x, z, bx: x, bz: z, half: h, top: ptop, mesh, active: true, move: null, crumble: null };
       if (!last && k > 0) {
-        if (level >= 2 && k % 4 === 2) {
-          const [mx, mz] = ax(plz > 11 ? 0 : 1, plz > 11 ? 1 : 0); // bouge perpendiculairement au tracé
-          p.move = { dx: mx, dz: mz, amp: 1.2 + level * 0.35, speed: 0.9 + level * 0.25, phase: k };
-        } else if (level >= 3 && k % 4 === 0) {
-          p.crumble = { t: 0, down: 0 };
-          mat.color.set('#ff7b2e'); mat.emissive.set('#ff3b00');
-        } else if (level >= 5 && k % 4 === 3) {
-          p.move = { dx: 0, dz: 0, vertical: true, amp: 0.9, speed: 1.6, phase: k };
+        if (level >= 4 && k % 3 === 2) {
+          const [mx, mz] = ax(plz > 11 ? 0 : 1, plz > 11 ? 1 : 0); // bouge doucement sur le côté
+          p.move = { dx: mx, dz: mz, amp: 0.9, speed: 0.7, phase: k };
         }
       }
       this.plats.push(p);
@@ -126,13 +123,17 @@ export class Parkour {
     const c = this.course;
     if (!c || player.vehicle) return;
     if (player.y > 0.6) c.started = true;
+    if (this.standing) c.checkpoint = this.standing;
     // retombé au sol près du parcours = dans la lave
     if (c.started && player.y < 0.15 && !player.airborne) {
       let near = false;
       for (const p of this.plats) if (Math.abs(player.pos.x - p.x) < 3.2 && Math.abs(player.pos.z - p.z) < 3.2) { near = true; break; }
       if (near) {
         c.started = false; c.falls++;
-        player.pos.x = c.start.x; player.pos.z = c.start.z; player.y = 0; player.vy = 0;
+        const cp = c.checkpoint;
+        if (cp) { player.pos.x = cp.x; player.pos.z = cp.z; player.y = cp.top + 0.05; c.started = true; }
+        else { player.pos.x = c.start.x; player.pos.z = c.start.z; player.y = 0; }
+        player.vy = 0;
         onFall?.(c.falls);
       }
     }

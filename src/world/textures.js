@@ -84,3 +84,72 @@ export function roundRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }
+
+// ---------- Textures du sol (générées sur canvas) ----------
+function canvasTex(size, draw, repeat) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  draw(c.getContext('2d'), size);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  if (repeat) t.repeat.set(repeat, repeat);
+  return t;
+}
+
+// Asphalte : grain, taches, rapiéçages
+export function asphaltTexture(rng, repeat) {
+  return canvasTex(512, (g, S) => {
+    g.fillStyle = '#3a3842'; g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 9000; i++) {
+      const v = 40 + Math.floor(rng() * 40);
+      g.fillStyle = `rgba(${v},${v - 2},${v + 8},${0.25 + rng() * 0.35})`;
+      g.fillRect(rng() * S, rng() * S, 1 + rng() * 2, 1 + rng() * 2);
+    }
+    for (let i = 0; i < 14; i++) {
+      g.fillStyle = `rgba(20,18,26,${0.15 + rng() * 0.2})`;
+      g.beginPath(); g.ellipse(rng() * S, rng() * S, 10 + rng() * 40, 6 + rng() * 25, rng() * 3, 0, Math.PI * 2); g.fill();
+    }
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle = 'rgba(70,68,80,0.55)';
+      g.fillRect(rng() * S, rng() * S, 30 + rng() * 60, 20 + rng() * 40);
+    }
+    g.strokeStyle = 'rgba(15,12,20,0.5)'; g.lineWidth = 1.2;
+    for (let i = 0; i < 6; i++) {
+      g.beginPath(); let x = rng() * S, y = rng() * S; g.moveTo(x, y);
+      for (let k = 0; k < 6; k++) { x += (rng() - 0.5) * 40; y += (rng() - 0.5) * 40; g.lineTo(x, y); }
+      g.stroke();
+    }
+  }, repeat);
+}
+
+// Trottoir : dalles carrées avec joints et légères variations
+export function sidewalkTexture(rng) {
+  return canvasTex(512, (g, S) => {
+    const n = 12, s = S / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const v = 178 + Math.floor(rng() * 22);
+      g.fillStyle = `rgb(${v},${v - 10},${v - 16})`;
+      g.fillRect(i * s, j * s, s, s);
+    }
+    g.strokeStyle = 'rgba(90,80,80,0.6)'; g.lineWidth = 2;
+    for (let i = 0; i <= n; i++) { g.beginPath(); g.moveTo(i * s, 0); g.lineTo(i * s, S); g.stroke(); g.beginPath(); g.moveTo(0, i * s); g.lineTo(S, i * s); g.stroke(); }
+    // bordure de trottoir plus claire
+    g.strokeStyle = '#e8e2da'; g.lineWidth = 10; g.strokeRect(5, 5, S - 10, S - 10);
+  });
+}
+
+// Herbe : brins et taches de couleur
+export function grassTexture(rng, repeat) {
+  return canvasTex(256, (g, S) => {
+    g.fillStyle = '#5e8a3a'; g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 5000; i++) {
+      const c = ['#4f7a30', '#6d9a44', '#7fae52', '#456d2a'][Math.floor(rng() * 4)];
+      g.fillStyle = c; g.fillRect(rng() * S, rng() * S, 1, 2 + rng() * 3);
+    }
+    for (let i = 0; i < 30; i++) {
+      g.fillStyle = ['#f4e04d', '#ffffff', '#ff8fc8'][Math.floor(rng() * 3)];
+      g.fillRect(rng() * S, rng() * S, 2, 2);
+    }
+  }, repeat);
+}

@@ -62,10 +62,10 @@ export class Vehicle {
     const fx = this.fx, fz = this.fz;
     let fwd = this.vel.x * fx + this.vel.z * fz;
     let latX = this.vel.x - fx * fwd, latZ = this.vel.z - fz * fwd;
-    const MAXF = 38, MAXR = -11;
+    const MAXF = 52, MAXR = -12;
     if (ay > 0) {
       if (fwd < -0.5) fwd += 32 * dt * ay;
-      else fwd += 17 * ay * dt * (1 - Math.max(0, fwd) / MAXF * 0.7);
+      else fwd += 27 * ay * dt * (1 - Math.max(0, fwd) / MAXF * 0.7);
     } else if (ay < 0) {
       if (fwd > 0.5) fwd += 32 * dt * ay;
       else fwd += 10 * ay * dt;

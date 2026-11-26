@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import './style.css';
 import { Colliders } from './world/collision.js';
 import { buildCity } from './world/city.js';
@@ -59,6 +63,7 @@ async function init() {
         vec3 c = h > 0.18 ? mix(mid, top, clamp((h-0.18)/0.5,0.0,1.0)) : mix(hor, mid, clamp(h/0.18,0.0,1.0));
         if (h < 0.0) c = mix(hor, vec3(0.94,0.54,0.48), clamp(-h*4.0,0.0,1.0));
         float s = max(dot(vDir, sunDir), 0.0);
+        float az = atan(vDir.z, vDir.x); float cl = sin(az * 7.0 + h * 30.0) * 0.5 + sin(az * 13.0 - h * 55.0) * 0.3 + sin(az * 23.0 + h * 90.0) * 0.2; cl = smoothstep(0.35, 0.9, cl) * smoothstep(0.02, 0.1, h) * (1.0 - smoothstep(0.18, 0.34, h)); c = mix(c, vec3(1.0, 0.62, 0.72), cl * 0.55);
         c += vec3(1.0,0.85,0.55) * pow(s, 400.0) * 2.0 + vec3(1.0,0.55,0.3) * pow(s, 8.0) * 0.45;
         gl_FragColor = vec4(c, 1.0); }`,
   }));
@@ -73,6 +78,21 @@ async function init() {
   }
   scene.add(sun, sun.target);
 
+  // Effet néon (bloom) : seulement en qualité Haute, sur ordinateur
+  let composer = null;
+  const draw = () => {
+    if (game.bloomOn) {
+      if (!composer) {
+        composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2), 0.55, 0.45, 0.82));
+        composer.addPass(new OutputPass());
+      }
+      const key = window.innerWidth + 'x' + window.innerHeight + '@' + renderer.getPixelRatio();
+      if (key !== draw.key) { draw.key = key; composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(window.innerWidth, window.innerHeight); }
+      composer.render();
+    } else renderer.render(scene, camera);
+  };
   const colliders = new Colliders();
   const game = { scene, camera, renderer, colliders, shadows, vehicles: [], mobile };
   game.city = buildCity(scene, colliders, { shadows });
@@ -90,7 +110,7 @@ async function init() {
     else game.vehicles.push(new Vehicle(game, { x: along, z: road + 4.3, heading: -Math.PI / 2 }));
   }
   game.traffic = new Traffic(game, 15);
-  game.peds = new Pedestrians(game, mobile ? 20 : 30);
+  game.peds = new Pedestrians(game, mobile ? 28 : 50);
   game.hud = new Hud();
   game.dialog = new Dialog(game);
   game.quiz = new Quiz(game);
@@ -210,7 +230,7 @@ async function init() {
       game.traffic.update(dt);
       for (const v of game.vehicles) { if (v.ai) { v.physics(dt); v.sync(); } }
       game.city.update(dt, mobile);
-      renderer.render(scene, camera);
+      draw();
       inp.endFrame();
       return;
     }
@@ -222,7 +242,7 @@ async function init() {
       for (const v of game.vehicles) { if (v.ai) { v.physics(dt); v.sync(); } }
       game.peds.update(dt);
       game.city.update(dt, mobile);
-      renderer.render(scene, camera);
+      draw();
       inp.endFrame();
       return;
     }
@@ -253,7 +273,7 @@ async function init() {
         const a = inp.carAxis();
         p.vehicle.drive(dt, a.x, a.y, inp.holding('handbrake'));
       } else {
-        game.parkour.update(dt, p, (falls) => { game.sfx.fail(); game.hud.toast(falls > 2 ? `Dans la lave ! Retour au départ (essai ${falls + 1}) — astuce : sprinte pour les grands sauts` : 'Dans la lave ! Retour au départ', 3); });
+        game.parkour.update(dt, p, (falls) => { game.sfx.fail(); game.hud.toast(falls > 2 ? `Plouf ! Tu repars de la dernière plateforme (essai ${falls + 1}) — astuce : prends de l'élan` : 'Plouf ! Tu repars de la dernière plateforme', 3); });
         p.updateOnFoot(dt, inp, cam.yaw);
       }
       game.traffic.update(dt);
@@ -304,7 +324,7 @@ async function init() {
       sun.target.position.set(p.x, 0, p.z);
       sun.position.set(p.x + sunDir.x * 200, sunDir.y * 200 + 40, p.z + sunDir.z * 200);
     }
-    renderer.render(scene, camera);
+    draw();
     inp.endFrame();
   }
   if (shadows) { sun.position.set(hq.x + sunDir.x * 200, 80, hq.z + sunDir.z * 200); sun.target.position.set(hq.x, 0, hq.z); }
