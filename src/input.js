@@ -10,6 +10,7 @@ export class Input {
     this.keys = new Set(); this.just = new Set(); this.virtual = new Set();
     this.hold = {};
     this.joy = { x: 0, y: 0 };
+    this.pedal = { gas: false, brake: false };
     this.dragX = 0; this.dragY = 0; this.lastDrag = -10;
     this.listeners = [];
     window.addEventListener('keydown', (e) => {
@@ -35,12 +36,24 @@ export class Input {
   action(name) { return this.virtual.has(name) || ACTIONS[name].some((c) => this.just.has(c)); }
   holding(name) { return !!this.hold[name] || ACTIONS[name].some((c) => this.keys.has(c)); }
   trigger(name) { this.virtual.add(name); }
-  axis() {
+  kb() {
     const k = this.keys;
-    let x = (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0) - (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0);
-    let y = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
-    x += this.joy.x; y -= this.joy.y;
-    return { x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) };
+    return {
+      x: (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0) - (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0),
+      y: (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0),
+    };
+  }
+  // À pied : clavier + joystick (toutes directions)
+  axis() {
+    const { x, y } = this.kb();
+    const c = (v) => Math.max(-1, Math.min(1, v));
+    return { x: c(x + this.joy.x), y: c(y - this.joy.y) };
+  }
+  // En voiture : joystick = direction seulement, pédales = avancer / freiner-reculer
+  carAxis() {
+    const { x, y } = this.kb();
+    const c = (v) => Math.max(-1, Math.min(1, v));
+    return { x: c(x + this.joy.x), y: c(y + (this.pedal.gas ? 1 : 0) - (this.pedal.brake ? 1 : 0)) };
   }
   endFrame() { this.just.clear(); this.virtual.clear(); this.dragX = 0; this.dragY = 0; }
 }

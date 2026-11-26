@@ -100,12 +100,63 @@ body.touch .ctl-touch { display: block; } body.touch .ctl-desktop { display: non
 body.touch #mobile { display: block; }
 #joy { position: fixed; left: 24px; bottom: 28px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.4); z-index: 15; touch-action: none; }
 #joy-knob { position: absolute; left: 45px; top: 45px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,61,139,0.85); border: 2px solid #fff; pointer-events: none; }
-#m-btns { position: fixed; right: 18px; bottom: 24px; display: grid; grid-template-columns: 76px 76px; gap: 10px; z-index: 15; }
-.m-btn { min-width: 60px; min-height: 60px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.6); background: rgba(20,10,38,0.75); color: #fff; font: 800 13px Inter, sans-serif; touch-action: none; }
-.m-btn.big { grid-column: span 2; min-height: 70px; background: linear-gradient(90deg, var(--pink), #ff6a3d); font-size: 16px; }
-body.touch #speedo { bottom: 210px; right: 24px; }
-body.touch #hint { bottom: 190px; }
+/* ---------- Commandes tactiles ---------- */
+.m-btn { position: fixed; z-index: 15; border-radius: 18px; border: 2px solid rgba(255,255,255,0.75); color: #fff; font: 800 16px Inter, sans-serif; letter-spacing: 1px; touch-action: none; background: linear-gradient(90deg, var(--pink), #ff6a3d); box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+#m-action { right: 20px; bottom: 32px; width: 150px; height: 64px; transition: opacity 0.2s; }
+#m-action.idle { opacity: 0.35; }
+#pedals { display: none; position: fixed; right: 20px; bottom: 20px; z-index: 15; gap: 14px; align-items: flex-end; }
+body.in-car #pedals { display: flex; }
+body.in-car #m-action { right: 220px; bottom: 26px; width: 130px; height: 52px; font-size: 14px; }
+.pedal { position: relative; border-radius: 14px; border: 3px solid #8c8c96; touch-action: none; display: grid; place-items: end center; padding-bottom: 8px;
+  background: repeating-linear-gradient(135deg, #5b5b66 0 7px, #3a3a44 7px 16px); box-shadow: 0 6px 0 #1c1c24, 0 8px 18px rgba(0,0,0,0.5); transition: transform 0.06s, box-shadow 0.06s; }
+.pedal span { font: 800 11px Inter, sans-serif; line-height: 1.1; text-align: center; color: #fff; background: rgba(0,0,0,0.55); padding: 2px 6px; border-radius: 6px; }
+.pedal.brake { width: 86px; height: 86px; }
+.pedal.gas { width: 66px; height: 128px; border-color: #b0b0ba; }
+.pedal.on { transform: translateY(5px) scale(0.97); box-shadow: 0 1px 0 #1c1c24, 0 3px 8px rgba(0,0,0,0.5); }
+.pedal.gas.on { border-color: #36e27a; } .pedal.brake.on { border-color: #ff5252; }
+body.touch #speedo { right: auto; left: 50%; transform: translateX(-50%); bottom: 14px; }
+body.touch #speed-val { font-size: 42px; }
 body.touch #dialog { bottom: 10px; z-index: 25; }
+body.touch #btn-book::after { content: 'CARNET'; }
+body.touch #btn-book { width: auto; border-radius: 22px; padding: 0 14px 0 10px; font: 800 13px Inter, sans-serif; display: flex; align-items: center; gap: 6px; }
+
+/* Téléphone en paysage : interface compacte et aérée */
+@media (max-height: 500px) {
+  #mission-box { top: 8px; left: 8px; max-width: 40vw; padding: 6px 10px; }
+  #mission-title { font-size: 13px; }
+  #mission-obj, #mission-extra { font-size: 12.5px; }
+  #compass { top: 6px; left: 50%; }
+  #arrow { width: 32px; height: 32px; }
+  #dist { font-size: 13px; }
+  #topright { top: 8px; right: 8px; flex-direction: column; align-items: flex-end; gap: 6px; }
+  #minimap { width: 96px; height: 96px; }
+  #topright > #defcount { font-size: 12px; padding: 3px 8px; }
+  .small-btns { flex-direction: row; gap: 6px; }
+  .icon-btn { width: 34px; height: 34px; font-size: 15px; }
+  body.touch #btn-book { height: 34px; font-size: 11px; }
+  #toasts { top: 70px; right: auto; left: 50%; transform: translateX(-50%); align-items: center; max-width: 50vw; }
+  .toast { font-size: 13px; padding: 7px 12px; }
+  #joy { left: 18px; bottom: 16px; width: 118px; height: 118px; }
+  #joy-knob { left: 34px; top: 34px; }
+  #m-action { bottom: 20px; width: 128px; height: 54px; font-size: 14px; }
+  .pedal.brake { width: 74px; height: 74px; }
+  .pedal.gas { width: 58px; height: 112px; }
+  #pedals { bottom: 14px; }
+  body.in-car #m-action { right: 190px; bottom: 16px; width: 112px; height: 46px; font-size: 12.5px; }
+  body.touch #speed-val { font-size: 32px; }
+  body.touch #speedo { bottom: 8px; }
+  #banner { top: 22%; } .b-title { font-size: 34px; } .b-sup { font-size: 14px; }
+  #dialog { padding: 22px 14px 8px; width: min(620px, calc(100vw - 280px)); }
+  #dlg-text { font-size: 14.5px; min-height: 0; }
+  #dlg-name { font-size: 16px; }
+  .card { padding: 14px 18px; max-height: calc(100vh - 16px); }
+  #quiz-q { font-size: 16px; margin: 8px 0; }
+  .answer { min-height: 44px; padding: 8px 12px; font-size: 14px; margin-bottom: 6px; }
+  #def-term { font-size: 26px; } #def-text { font-size: 14px; }
+  #yield { top: 52px; padding: 8px 14px; min-width: 240px; }
+  #yield-price { font-size: 40px; }
+  .logo { font-size: 64px; } .subtitle { margin: 8px 0 14px; } .controls { margin-top: 12px; padding: 8px 12px; }
+}
 
 @media (max-width: 700px) {
   #minimap { width: 120px; height: 120px; }
@@ -113,5 +164,7 @@ body.touch #dialog { bottom: 10px; z-index: 25; }
   #mission-title { font-size: 15px; } #mission-obj, #mission-extra { font-size: 14px; }
   #toasts { top: 230px; max-width: 60vw; }
   #compass { top: 150px; left: 38%; }
+  body.in-car #m-action { right: 20px; bottom: 168px; }
+  body.touch #speedo { left: auto; right: 24px; transform: none; bottom: 240px; }
   #yield { top: 150px; min-width: 260px; }
 }

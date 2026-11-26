@@ -220,7 +220,7 @@ async function init() {
       }
       if (inp.action('horn')) game.sfx.horn();
       if (p.vehicle) {
-        const a = inp.axis();
+        const a = inp.carAxis();
         p.vehicle.drive(dt, a.x, a.y, inp.holding('handbrake'));
       } else p.updateOnFoot(dt, inp, cam.yaw);
       game.traffic.update(dt);
@@ -237,15 +237,16 @@ async function init() {
     game.sfx.engine(!!v && !paused, v ? Math.min(1, Math.abs(v.speed) / 38) : 0);
     game.hud.setSpeed(v ? Math.round(Math.abs(v.speed) * 3.6) : null);
     let hint = '', label = 'ACTION';
+    game.mobileControls.setMode(!!v);
     if (game.missions.active && game.missions.step?.type === 'yield') { hint = 'E : acheter le billet'; label = 'ACHETER'; }
     else if (v) { hint = game.mobile ? '' : 'E : descendre du véhicule  ·  Espace : frein à main  ·  H : klaxon'; label = 'DESCENDRE'; }
     else {
       const nv = nearestVehicle();
       if (nv) { hint = nv.ai ? 'Appuie sur E pour voler la voiture' : 'Appuie sur E pour monter dans la voiture'; label = nv.ai ? 'VOLER' : 'MONTER'; }
     }
-    if (game.mobile) hint = hint.replace('Appuie sur E', 'Bouton ' + label).replace('E : ', label + ' : ');
+    if (game.mobileControls.enabled) hint = '';
     game.hud.setHint(hint);
-    game.mobileControls.setActionLabel(label);
+    game.mobileControls.setActionLabel(label, label !== 'ACTION');
     const tgt = game.missions.target();
     if (tgt) {
       const dx = tgt.x - p.x, dz = tgt.z - p.z;
