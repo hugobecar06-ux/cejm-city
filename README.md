@@ -1,4 +1,4 @@
-# CEJM NEON CITY — le jeu de l'économie numérique
+# CEJM CITY — le jeu de l'économie numérique
 
 Jeu 3D en monde ouvert (Three.js) jouable dans le navigateur, sur PC et mobile, pour les étudiants de BTS NDRC.
 Le joueur termine 10 missions, et chacune débloque la définition d'une notion de l'économie numérique.
@@ -56,7 +56,7 @@ npm run deploy
 
 `npm run deploy` compile le jeu et publie le dossier `dist/` sur la branche `gh-pages`.
 
-Le jeu est en ligne quelques minutes plus tard à l'adresse `https://<pseudo>.github.io/cejm-neon-city/`.
+Le jeu est en ligne quelques minutes plus tard à l'adresse `https://<pseudo>.github.io/cejm-city/`.
 
 ## Technique
 

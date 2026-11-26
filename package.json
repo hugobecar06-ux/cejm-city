@@ -1,8 +1,8 @@
 {
-  "name": "cejm-neon-city",
+  "name": "cejm-city",
   "version": "1.0.0",
   "private": true,
-  "description": "CEJM Neon City — jeu 3D pédagogique sur l'économie numérique (BTS NDRC)",
+  "description": "CEJM City — jeu 3D pédagogique sur l'économie numérique (BTS NDRC)",
   "type": "module",
   "scripts": {
     "dev": "vite",

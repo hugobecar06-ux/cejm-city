@@ -279,7 +279,7 @@ export class MissionEngine {
   updateHud() {
     const h = this.game.hud;
     if (!this.active) {
-      if (this.completed >= MISSIONS.length) h.setMission('MODE LIBRE', 'Explore CEJM Neon City ! (J : carnet de définitions)', '');
+      if (this.completed >= MISSIONS.length) h.setMission('MODE LIBRE', 'Explore CEJM City ! (J : carnet de définitions)', '');
       else {
         const m = MISSIONS[this.completed];
         h.setMission(`MISSION ${this.completed + 1}/10 — ${m.title}`, `Rejoins le marqueur jaune : ${this.game.city.landmarks[m.start].name}`, '');

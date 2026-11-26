@@ -4,7 +4,7 @@ import { textTexture } from './textures.js';
 
 // Lieux nommés des missions. i/j = indice du pâté (0..9) en x / z, side = côté de l'entrée.
 export const LANDMARKS = [
-  { id: 'hq', name: 'NEON CITY HQ', i: 4, j: 4, side: 's', kind: 'tower', color: '#7b86d6' },
+  { id: 'hq', name: 'CEJM CITY HQ', i: 4, j: 4, side: 's', kind: 'tower', color: '#7b86d6' },
   { id: 'martin', name: 'CABINET MARTIN', i: 1, j: 1, side: 'e', kind: 'office', color: '#c9b79c', h: 28 },
   { id: 'datacenter', name: 'DATA CENTER', i: 8, j: 8, side: 'w', kind: 'datacenter' },
   { id: 'ferme', name: 'FERME DUBOIS', i: 0, j: 9, side: 'n', kind: 'farm' },
@@ -93,8 +93,8 @@ const BUILDERS = {
     c.neon({ t: 'ico', r: 1.2, pos: [0, 137, 0], color: '#ff3d8b' });
     c.plain({ t: 'box', w: 12, h: 0.6, d: 5, pos: [0, 4.5, 13], color: '#2a2440' });
     c.neon({ t: 'box', w: 12, h: 0.2, d: 0.2, pos: [0, 4.3, 15.5], color: '#28e0d8' });
-    c.sign('NEON CITY HQ', { lz: 11.15, y: 9, width: 18 });
-    c.sign('CEJM NEON CITY', { lz: 11.15, y: 110, width: 21.5, glow: '#28e0d8' });
+    c.sign('CEJM CITY HQ', { lz: 11.15, y: 9, width: 18 });
+    c.sign('CEJM CITY', { lz: 11.15, y: 110, width: 21.5, glow: '#28e0d8' });
   },
   office(c) {
     const h = c.lm.h || 24;

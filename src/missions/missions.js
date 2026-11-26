@@ -61,7 +61,7 @@ export const DEFINITIONS = [
 ];
 
 export const INTRO = [
-  ['Léa', "Salut ! Bienvenue à CEJM Neon City ! Moi, c'est Léa, fondatrice de la start-up Neon City Corp."],
+  ['Léa', "Salut ! Bienvenue à CEJM City ! Moi, c'est Léa, fondatrice de la start-up CEJM City Corp."],
   ['Léa', "Mon rêve : bâtir un empire du numérique. Et pour ça, j'ai besoin de toi !"],
   ['Léa', "Mission après mission, je vais t'apprendre les règles de la nouvelle économie. Je te guide par téléphone."],
   ['Léa', "Suis la flèche en haut de l'écran et rejoins le marqueur jaune. Tu peux prendre n'importe quelle voiture avec E. Le carnet de définitions s'ouvre avec J. À toi de jouer !"],
@@ -166,7 +166,7 @@ export const MISSIONS = [
         ['Léa', 'Teste l\'appli : deviens chauffeur UBIK ! Ta première cliente, Inès, t\'attend.'],
       ] },
       { type: 'goto', target: [-153.75, 100], car: true, npc: N('Inès'), objective: 'Course UBIK : récupère Inès (en voiture)' },
-      { type: 'goto', target: 'hq', car: true, time: 70, objective: 'Dépose Inès au Neon City HQ', done: 'Inès descend : ★★★★★' },
+      { type: 'goto', target: 'hq', car: true, time: 70, objective: 'Dépose Inès au CEJM City HQ', done: 'Inès descend : ★★★★★' },
       { type: 'dialog', lines: [['UBIK', '🔔 Nouvelle course disponible ! Karim t\'attend. Destination : le Café Wifi.']] },
       { type: 'goto', target: [126.25, 160], car: true, npc: N('Karim'), objective: 'Course UBIK : récupère Karim (en voiture)' },
       { type: 'goto', target: 'cafe', car: true, time: 80, objective: 'Dépose Karim au Café Wifi', done: 'Karim descend : ★★★★★' },
