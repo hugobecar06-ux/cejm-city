@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>CEJM City — Le jeu de l'économie numérique</title>
+  <meta name="description" content="10 missions pour maîtriser l'économie numérique : un jeu 3D en monde ouvert, jouable dans le navigateur, pour les étudiants de BTS NDRC." />
+  <meta name="theme-color" content="#2b1055" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="CEJM City — Le jeu de l'économie numérique" />
+  <meta property="og:description" content="Vole des voitures, termine 10 missions et débloque les 10 définitions de l'économie numérique. Jouable sur PC et mobile, sans installation." />
+  <meta property="og:image" content="https://hugobecar06-ux.github.io/cejm-city/og-image.png" />
+  <meta property="og:url" content="https://hugobecar06-ux.github.io/cejm-city/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/cejm-city/favicon.svg" />
+  <link rel="apple-touch-icon" href="/cejm-city/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/cejm-city/assets/index-BqTLdZ2W.js"></script>
+  <link rel="stylesheet" crossorigin href="/cejm-city/assets/index-tPLbRX9Z.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div class="tbar top"></div><div class="tbar bottom"></div>
+  <div id="loading">Chargement de CEJM City…</div>
+
+  <div id="title" class="overlay hidden">
+    <div class="title-card">
+      <div class="logo">CEJM <span>CITY</span></div>
+      <div class="subtitle">10 missions pour maîtriser l'économie numérique</div>
+      <div class="title-btns">
+        <button id="btn-play" class="btn primary">Jouer</button>
+        <button id="btn-new" class="btn hidden">Nouvelle partie</button>
+      </div>
+      <div class="controls">
+        <div class="ctl-desktop">
+          <b>Z/Q/S/D</b> ou <b>flèches</b> : se déplacer / conduire · <b>Shift</b> : sprint · <b>Espace</b> : frein à main<br />
+          <b>E</b> : monter / descendre d'un véhicule, action · <b>J</b> : carnet · <b>C</b> : carte (poser un repère) · <b>H</b> : klaxon · <b>M</b> : son<br />
+          <b>Glisser la souris</b> : tourner la caméra · <b>Entrée / Espace / clic</b> : dialogues
+        </div>
+        <div class="ctl-touch">Joystick à gauche · boutons à droite · glisse sur l'écran pour tourner la caméra</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ui" class="hidden">
+    <div id="topleft">
+      <div id="mission-box" class="panel">
+        <div id="mission-title"></div>
+        <div id="mission-obj"></div>
+        <div id="mission-extra"></div>
+      </div>
+      <div class="small-btns">
+        <button id="btn-book" class="pill-btn" title="Carnet (J)">📒 CARNET</button>
+        <button id="btn-settings" class="pill-btn" title="Réglages">⚙️ RÉGLAGES</button>
+      </div>
+    </div>
+    <div id="topright">
+      <canvas id="minimap"></canvas>
+      <div id="defcount" class="panel">Définitions : 0/10</div>
+    </div>
+    <div id="toasts"></div>
+    <div id="compass"><svg id="arrow" viewBox="0 0 40 40"><path d="M20 3 L34 34 L20 26 L6 34 Z" fill="#ffd400" stroke="#1a0b2e" stroke-width="3" stroke-linejoin="round"/></svg><div id="dist"></div></div>
+    <div id="banner"></div>
+    <div id="hint"></div>
+    <div id="speedo"><span id="speed-val">0</span><small>km/h</small></div>
+
+    <div id="yield" class="panel hidden">
+      <div class="y-title">BILLETTERIE DU ZÉNITH — PRIX EN DIRECT</div>
+      <div id="yield-price">45 €</div>
+      <div id="yield-demand">Demande : moyenne</div>
+      <div class="y-rule">Achète quand le prix passe sous 30 €</div>
+      <div id="yield-feedback"></div>
+    </div>
+
+    <div id="dialog" class="hidden">
+      <div id="dlg-name"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-next">Suivant ▸</div>
+    </div>
+
+    <div id="mobile">
+      <div id="joy"><div id="joy-knob"></div></div>
+      <div id="steer">
+        <div id="s-left" class="steer-btn" aria-label="Tourner à gauche">◀</div>
+        <div id="s-right" class="steer-btn" aria-label="Tourner à droite">▶</div>
+      </div>
+      <button id="m-jump" class="m-btn">SAUTER</button>
+      <button id="m-action" class="m-btn big">ACTION</button>
+      <div id="pedals">
+        <div id="p-brake" class="pedal brake" aria-label="Frein / marche arrière"><span>FREIN<br />RECUL</span></div>
+        <div id="p-gas" class="pedal gas" aria-label="Accélérer"><span>GAZ</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="overlay hidden">
+    <div class="card">
+      <div class="card-label">QUIZ</div>
+      <div id="quiz-q"></div>
+      <div id="quiz-answers"></div>
+      <div id="quiz-feedback"></div>
+      <button id="quiz-continue" class="btn primary hidden">Continuer</button>
+    </div>
+  </div>
+
+  <div id="defcard" class="overlay hidden">
+    <div class="card def">
+      <div class="card-label pink">DÉFINITION DÉBLOQUÉE</div>
+      <div id="def-num"></div>
+      <div id="def-term"></div>
+      <p id="def-text"></p>
+      <p id="def-ex"></p>
+      <button id="def-continue" class="btn primary">Continuer</button>
+    </div>
+  </div>
+
+  <div id="notebook" class="overlay hidden">
+    <div class="card wide">
+      <div class="card-label">CARNET DE DÉFINITIONS</div>
+      <div id="nb-list"></div>
+      <div class="row">
+        <button id="nb-reset" class="btn danger">Réinitialiser la progression</button>
+        <button id="nb-close" class="btn primary">Fermer (J)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bigmap" class="overlay hidden">
+    <div class="card map-card">
+      <div class="map-head"><div class="card-label">CARTE</div><span>Touche la carte pour poser un repère 📍</span></div>
+      <div class="map-wrap"><canvas id="bigmap-canvas"></canvas></div>
+      <div class="row">
+        <button id="bigmap-clear" class="btn danger">Retirer le repère</button>
+        <button id="bigmap-close" class="btn primary">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings" class="overlay hidden">
+    <div class="card">
+      <div class="card-label">RÉGLAGES</div>
+      <div class="set-row"><label for="set-sound">Son</label><button id="set-sound" class="toggle">Activé</button></div>
+      <div class="set-row"><label for="set-volume">Volume</label><input id="set-volume" type="range" min="0" max="100" step="5" /></div>
+      <div class="set-row"><label for="set-sens">Sensibilité de la caméra</label><input id="set-sens" type="range" min="30" max="200" step="10" /></div>
+      <div class="set-row"><label for="set-camdist">Distance de la caméra</label>
+        <div class="seg" id="set-camdist"><button data-v="near">Proche</button><button data-v="far">Loin</button><button data-v="vfar">Très loin</button></div></div>
+      <div class="set-row"><label for="set-autocam">Caméra qui suit automatiquement</label><button id="set-autocam" class="toggle">Activée</button></div>
+      <div class="set-row"><label for="set-quality">Qualité graphique</label>
+        <div class="seg" id="set-quality"><button data-v="low">Basse</button><button data-v="mid">Moyenne</button><button data-v="high">Haute</button></div></div>
+      <div class="set-row touch-only"><label for="set-btnsize">Taille des commandes tactiles</label>
+        <div class="seg" id="set-btnsize"><button data-v="1">Normale</button><button data-v="1.2">Grande</button></div></div>
+      <div class="set-row"><label for="set-minimap">Mini-carte</label><button id="set-minimap" class="toggle">Affichée</button></div>
+      <p class="set-note">Les réglages sont gardés sur cet appareil.</p>
+      <button id="set-close" class="btn primary">Fermer</button>
+    </div>
+  </div>
+
+  <div id="cine" class="hidden">
+    <div class="cine-bar top"></div>
+    <div class="cine-bar bottom"></div>
+    <div id="cine-flash"></div>
+    <div id="cine-text">
+      <div id="cine-sub"></div>
+      <div id="cine-title">CEJM <span>CITY</span></div>
+    </div>
+    <button id="cine-skip">Passer ▸</button>
+  </div>
+
+  <div id="endscreen" class="overlay hidden">
+    <div class="card wide">
+      <div class="logo small">FÉLICITATIONS !</div>
+      <p class="end-sub">Tu as terminé les 10 missions et maîtrisé les règles de l'économie numérique. Léa est fière de toi : CEJM City Corp est devenue un empire !</p>
+      <ol id="end-list"></ol>
+      <button id="end-continue" class="btn primary">Continuer à explorer</button>
+    </div>
+  </div>
+
+</body>
+</html>
